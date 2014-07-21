@@ -1,22 +1,31 @@
+//let's add some functions to the Array to get back a functional 
+//interface and to clean up the code below. 
 Array.prototype.clone = function() {
     return this.slice(0);
 };
 
-module.exports = {
-    variable: function(n) {
-	return n;
-    },
-    
-    isVariable: function(n) {
-	return (typeof n === 'number');
-    },
+/**
+ * Cons, Car, Cdr - similar to Racket operators, but operate at the
+ * end of the Array to not mess with JS' model. 
+ */
+Array.prototype.cons = function(x) {
+    var newArray = this.clone()
+    newArray.push(x);
+    return newArray;
+};
+Array.prototype.car = function() {
+    return this[this.length-1];
+};
+Array.prototype.cdr = function() {
+    return this.slice(0, this.length-2);
+};
 
-    extendState: function(x, v, state) {
-	var xv = [x, v];
-	var newState = state.clone(); //create new array
-	newState.push(xv);
-	return newState;
-    },
+module.exports = {
+    variable: function(n) { return n; },
+    
+    isVariable: function(n) { return (typeof n === 'number'); },
+
+    extendState: function(x, v, state) { return state.cons([x, v]); },
 
     //assv goes from the back to front because push/pop works on last element
     assv: function (key, list) {
@@ -28,12 +37,7 @@ module.exports = {
 
     walk: function(u, s) {
 	var pr = this.isVariable(u) && this.assv(u, s);
-	if (pr) {
-	    return this.walk(pr, s);
-	} else {
-	    return u;
-	}
-	//return pr ? this.walk(pr,s) : u;
+	return pr ? this.walk(pr,s) : u;
     },
 
     unification: function(u, v, s) {
@@ -46,12 +50,8 @@ module.exports = {
 	} else if (this.isVariable(v)) {
 	    return this.extendState(v, u, s);
 	} else if (Array.isArray(u) && Array.isArray(v)) {
-	    var newState = this.unification(u.pop(), v.pop(), s);
-	    if (s) {
-		this.unification(u, v, s); //last elements of u/v are popped off u,v = cdr
-	    } else {
-		return false;
-	    }
+	    s = this.unification(u.car(), v.car(), s);
+	    return s && this.unification(u.cdr(), v.cdr(), s); //needs to be tested
 	} else {
 	    return false;
 	}
@@ -97,11 +97,7 @@ module.exports = {
 	} else if (Array.isArray($1) && $1.length === 0) {
 	    return $2;
 	} else {
-	    var $c1 = $1.clone();
-	    var lastElement = $c1.pop();
-	    var recursiveCall = this.$Append($c1, $2);
-	    recursiveCall.push(lastElement);
-	    return recursiveCall;
+	    return this.$Append($1.cdr(), $2).cons($1.car());
 	}
     },
 
@@ -111,22 +107,11 @@ module.exports = {
 	} else if (Array.isArray($) && $.length === 0) {
 	    return [];
 	} else {
-	    var $c = $.clone();
-	    var lastElement = $c.pop();
-	    var recursiveCall = this.$AppendMap(g, $c);
-	    return this.$Append(recursiveCall, g(lastElement));
+	    return this.$Append(this.$AppendMap(g, $.cdr()), g($.car()));
 	}
     },
     
     callWithEmptyState: function(g) {
 	return g([[], 0]);
-    },
-
-    test: function() {
-	var self = this;
-	return self.callWithEmptyState(self.callWithFresh(function(a) {
-		return self.unify(a, 'five');
-	    }));
-    }
-			 
+    }			 
 }
