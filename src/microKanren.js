@@ -1,6 +1,6 @@
 const car = ([car, cdr]) => car;
 
-const cdr = ([car, cdr]) => cdr ? cdr : [];
+const cdr = ([car, cdr]) => cdr;
 
 const cons = (car, cdr) => [car, ...(Array.isArray(cdr) ? cdr : [cdr])];
 

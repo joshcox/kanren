@@ -6,20 +6,20 @@ import {
     unify
 } from "../src/microKanren";
 
-const test1 = () => callWithEmptyState(
-    conj(
-        callWithFresh(a => unify(a, "seven")),
-        callWithFresh(b => disj(
-            unify(b, "five"),
-            unify(b, "six")
-        ))
-    )
-);
-
-const test2 = () => callWithEmptyState(callWithFresh(a => unify(a, "five")));
-console.log(test2());
-const test3 = () => callWithEmptyState(callWithFresh(a => disj(unify(a, "five"), unify(a, "six"))));
-console.log(test3());
+// const test1 = () => callWithEmptyState(
+//     conj(
+//         callWithFresh(a => unify(a, "seven")),
+//         callWithFresh(b => disj(
+//             unify(b, "five"),
+//             unify(b, "six")
+//         ))
+//     )
+// );
+//
+// const test2 = () => callWithEmptyState(callWithFresh(a => unify(a, "five")));
+// console.log(test2());
+// const test3 = () => callWithEmptyState(callWithFresh(a => disj(unify(a, "five"), unify(a, "six"))));
+// console.log(test3());
 
 describe("microKanren", () => {
     describe("unification", () => {
