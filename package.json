@@ -2,7 +2,8 @@
   "name": "microJSKanren",
   "version": "0.0.1",
   "scripts": {
-    "build": "webpack"
+    "build": "webpack",
+    "test": "karma start"
   },
   "dependencies": {},
   "devDependencies": {
@@ -11,6 +12,11 @@
     "babel-plugin-add-module-exports": "^0.2.1",
     "babel-preset-es2015": "^6.24.1",
     "babel-preset-stage-0": "^6.24.1",
+    "jasmine-core": "^2.7.0",
+    "karma": "^1.7.0",
+    "karma-chrome-launcher": "^2.2.0",
+    "karma-jasmine": "^1.1.0",
+    "karma-webpack": "^2.0.4",
     "webpack": "^3.3.0"
   }
 }

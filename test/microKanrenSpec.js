@@ -4,7 +4,7 @@ import {
     conj,
     disj,
     unify
-} from "./index";
+} from "../src/microKanren";
 
 const test1 = () => callWithEmptyState(
     conj(
@@ -16,4 +16,8 @@ const test1 = () => callWithEmptyState(
     )
 );
 
-console.log(test1());
+describe("microKanren", () => {
+    it("true is true", () => {
+        expect(true).toBeTruthy()
+    });
+});
