@@ -16,6 +16,11 @@ const test1 = () => callWithEmptyState(
     )
 );
 
+const test2 = () => callWithEmptyState(callWithFresh(a => unify(a, "five")));
+console.log(test2());
+const test3 = () => callWithEmptyState(callWithFresh(a => disj(unify(a, "five"), unify(a, "six"))));
+console.log(test3());
+
 describe("microKanren", () => {
     describe("unification", () => {
         describe("when unifying two grounded values", () => {
@@ -57,6 +62,16 @@ describe("microKanren", () => {
                 expect(unify(0, "a")([[[0, "b"]], 0])).toEqual([]);
                 expect(unify("a", 0)([[[0, "b"]], 0])).toEqual([]);
             });
+        });
+    });
+
+    describe("callWithFresh", () => {
+        it("creates a binding with a new variable", () => {
+            const g = jasmine.createSpy("goalSpy");
+            const f = jasmine.createSpy("freshSpy").and.returnValue(g);
+            callWithFresh(f)([[], 0]);
+            expect(f).toHaveBeenCalledWith(0);
+            expect(g).toHaveBeenCalledWith([[], 1]);
         });
     });
 });

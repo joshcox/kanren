@@ -1,12 +1,12 @@
 const car = ([car, cdr]) => car;
 
-const cdr = ([car, cdr]) => cdr;
+const cdr = ([car, cdr]) => cdr ? cdr : [];
 
 const cons = (car, cdr) => [car, ...(Array.isArray(cdr) ? cdr : [cdr])];
 
 const $append = ($1, $2) => {
-    if (typeof $1 === "function") return () => $append($2, $1());
     if (Array.isArray($1) && $1.length === 0) return $2;
+    if (typeof $1 === "function") return () => $append($2, $1());
     return cons(car($1), $append(cdr($1), $2));
 };
 
