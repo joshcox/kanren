@@ -2,7 +2,7 @@ const car = ([car, cdr]) => car;
 
 const cdr = ([car, cdr]) => cdr;
 
-const cons = (car, cdr) => [car, ...[cdr]];
+const cons = (car, cdr) => [car, ...(Array.isArray(cdr) ? cdr : [cdr])];
 
 const $append = ($1, $2) => {
     if (typeof $1 === "function") return () => $append($2, $1());
@@ -24,20 +24,20 @@ const assv = (key, list) => list.find(item => car(item) === key);
 
 const walk = (u, state) => {
     const pr = isVariable(u) && assv(u, state);
-    return pr ? walk(pr, state) : u;
+    return pr ? walk(cdr(pr), state) : u;
 };
 
 const unification = (u, v, state) => {
+    if (!state) return false;
+
     u = walk(u, state);
     v = walk(v, state);
 
     if (u === v) return [...state];
     if (isVariable(u)) return extendState(u, v, state);
     if (isVariable(v)) return extendState(v, u, state);
-    if (Array.isArray(u) && Array.isArray(v)) {
-        const s = unification(car(u), cdr(v), state);
-        return s && unification(car(u), cdr(u), s);
-    }
+    if (Array.isArray(u) && Array.isArray(v))
+        return unification(cdr(u), cdr(u), unification(car(u), car(v), state));
     return false;
 };
 

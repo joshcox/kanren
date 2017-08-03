@@ -1,6 +1,7 @@
 const path = require('path');
 
 module.exports = {
+    devtool: "source-map",
     entry: './src/microKanren.js',
     target: 'node',
     output: {
@@ -15,4 +16,4 @@ module.exports = {
             exclude: /node_modules/
         }]
     }
-}
+};
