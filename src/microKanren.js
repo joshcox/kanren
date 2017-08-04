@@ -3,15 +3,7 @@ import State from "./State";
 
 const call = (goal, s = new State()) => goal(s);
 
-const fresh = fn => {
-    let lvars = [];
-    for (let i = 0; i < fn.length; i++) {
-        lvars = [new Variable(), ...lvars];
-    }
-    return fn(...lvars);
-};
-
-// const fresh = fn => fn(new Variable());
+const fresh = fn => fn(...Array.from(new Array(fn.length), _ => new Variable()));
 
 const conj = (goal1, goal2) => state => goal1(state)
     .reduce((states, state) => [...states, ...goal2(state)], []);
