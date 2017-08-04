@@ -26,6 +26,7 @@ describe("", () => {
        console.log(call(fresh(a => unify(a, 1))));
        console.log(call(fresh(a => disj(unify(a, "a"), unify(a, "b")))));
        console.log(call(fresh(a => conj(unify(a, "a"), unify(a, "b")))));
+       console.log(call(fresh((a, b) => unify(a, b))));
    });
 });
 
