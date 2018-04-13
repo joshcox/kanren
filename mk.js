@@ -1,117 +1,101 @@
-//let's add some functions to the Array to get back a functional 
-//interface and to clean up the code below. 
-Array.prototype.clone = function() {
-    return this.slice(0);
+// microKanren
+
+// List
+const head = ([car]) => car;
+const tail = ([car, ...cdr]) => cdr;
+
+// Stream
+const append$ = ($1, $2) => {
+    if ($1 instanceof Function) {
+        return () => append$($2, $1());
+    } else if (Array.isArray($1) && $1.length === 0) {
+        return $2;
+    } else {
+        return [head($1), ...append$(tail($1), $2)];
+    }
+};
+const appendMap$ = (g, $) => {
+    if ($ instanceof Function) {
+        return () => appendMap$(g, $());
+    } else if (Array.isArray($) && $.length === 0) {
+        return [];
+    } else {
+        return append$(appendMap$(g, tail($)), g(head($)));
+    }
 };
 
-/**
- * Cons, Car, Cdr - similar to Racket operators, but operate at the
- * end of the Array to not mess with JS' model. 
- */
-Array.prototype.cons = function(x) {
-    var newArray = this.clone()
-    newArray.push(x);
-    return newArray;
+// Substitution Store
+const substitution = (left, right) => ({ left, right });
+const substitutionStore = (left, right, store) => [substitution(left, right), ...store];
+const walkSubstitution = (u, store) => {
+    const pr = typeof u === "symbol" && store.find(({left}) => left === u);
+    return pr ? walkSubstitution(pr, store) : u;
 };
-Array.prototype.car = function() {
-    return this[this.length-1];
+const unification = (u, v, store) => {
+    u = walkSubstitution(u, store);
+    v = walkSubstitution(v, store);
+
+    if (u === v) {
+        return [...store];
+    } else if (typeof u === "symbol") {
+        return substitutionStore(u, v, store);
+    } else if (typeof v === "symbol") {
+        return substitutionStore(v, u, store);
+    } else if (Array.isArray(u) && Array.isArray(v)) {
+        store = unification(head(u), head(v), store);
+        return store && unification(tail(u), tail(cdr), store);
+    } else {
+        return false;
+    }
 };
-Array.prototype.cdr = function() {
-    return this.slice(0, this.length-2);
+
+// TODO - Make constraints extendable to add any number of stores
+const constraints = (subStore, count) => ({ subStore, count });
+
+// unify goal
+const unify = (u, v) => ({ subStore, count }) => {
+    const s = unification(u, v, subStore);
+    return s ? [constraints(s, count)] : [];
 };
 
-module.exports = {
-    variable: function(n) { return n; },
-    
-    isVariable: function(n) { return (typeof n === 'number'); },
+// fresh logic variable goal
+const callWithFresh = f => ({ subStore, count}) =>
+    f(Symbol(count))(constraints(subStore, count+1));
 
-    extendState: function(x, v, state) { return state.cons([x, v]); },
+// disjunction/or goal
+const disj = (g1, g2) => constraints =>
+    append$(g1(constraints), g2(constraints));
 
-    //assv goes from the back to front because push/pop works on last element
-    assv: function (key, list) {
-	for (var i = list.length - 1; i >= 0; i--) {
-	    if (list[i][0] === key) return list[i];
-	}
-	return false;
-    },
+// conjunction/and goal
+const conj = (g1, g2) => constraints => appendMap$(g2, g1(constraints));
 
-    walk: function(u, s) {
-	var pr = this.isVariable(u) && this.assv(u, s);
-	return pr ? this.walk(pr,s) : u;
-    },
+// bootstrapper
+const callWithEmptyState = g => g(constraints([], 0));
 
-    unification: function(u, v, s) {
-	var u = this.walk(u, s);
-	var v = this.walk(v, s);
-	if (u === v) {
-	    return s.clone(); //return new for backtracking
-	} else if (this.isVariable(u)) {
-	    return this.extendState(u, v, s);
-	} else if (this.isVariable(v)) {
-	    return this.extendState(v, u, s);
-	} else if (Array.isArray(u) && Array.isArray(v)) {
-	    s = this.unification(u.car(), v.car(), s);
-	    return s && this.unification(u.cdr(), v.cdr(), s); //needs to be tested
-	} else {
-	    return false;
-	}
-    },
+const foo = callWithEmptyState(
+    conj(
+        callWithFresh(a => unify(a, "seven")),
+        callWithFresh(b => disj(
+            unify(b, "five"),
+            unify(b, "six")
+        ))
+    )
+);
 
-    unify: function(u, v) {
-	var self = this;
-	return function(sWithCount) {
-	    var s = self.unification(u, v, sWithCount[0]);
-	    if (s) {
-		return [[s, sWithCount[1]]];
-	    } else {
-		return [];
-	    }
-	}
-    },
+const prettyPrint = ([...solutions]) => solutions
+    .map(({ subStore, count }, solutionIndex) => {
+        return {
+            solutionNumber: solutionIndex + 1,
+            substitution: subStore
+                .map(({ left, right }) => `${left.toString()}: ${right}`)
+                .join("\n\t\t"),
+            count: `${count}`
+        }
+    })
+    .forEach(({ solutionNumber, substitution, count }) => {
+        console.log(`Solution #${solutionNumber}:`);
+        console.log(`\tNumber of LVars: ${count}`);
+        console.log(`\tSubstitution Store:\n\t\t${substitution}`);
+    });
 
-    callWithFresh: function(f) {
-	return function(sWithCount) {
-	    var s = sWithCount[0].clone();
-	    var c = sWithCount[1];
-	    return f(c)([s, c+1]);
-	}
-    },
-
-    disj: function(g1, g2) {
-	var self = this;
-	return function(sWithCount) {
-	    return self.$Append(g1(sWithCount), g2(sWithCount));
-	}
-    },
-
-    conj: function(g1, g2) {
-	var self = this;
-	return function(sWithCount) {
-	    return self.$AppendMap(g2, g1(sWithCount));
-	}
-    },
-    
-    $Append: function($1, $2) {
-	if ($1 instanceof Function) {
-	    return function() { this.$Append($2, $1()) };
-	} else if (Array.isArray($1) && $1.length === 0) {
-	    return $2;
-	} else {
-	    return this.$Append($1.cdr(), $2).cons($1.car());
-	}
-    },
-
-    $AppendMap: function(g, $) {
-	if ($ instanceof Function) {
-	    return function() { this.$AppendMap(g, $()) };
-	} else if (Array.isArray($) && $.length === 0) {
-	    return [];
-	} else {
-	    return this.$Append(this.$AppendMap(g, $.cdr()), g($.car()));
-	}
-    },
-    
-    callWithEmptyState: function(g) {
-	return g([[], 0]);
-    }			 
-}
+prettyPrint(foo);
