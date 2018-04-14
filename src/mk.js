@@ -13,7 +13,7 @@ const append$ = ($1, $2) => $1 instanceof Function
 
 const appendMap$ = (g, $) => $ instanceof Function
     ? () => appendMap$(g, $())
-    :Array.isArray($) && $.length === 0
+    : Array.isArray($) && $.length === 0
         ? []
         : append$(appendMap$(g, tail($)), g(head($)));
 
@@ -76,15 +76,13 @@ const foo = callWithEmptyState(
 );
 
 const prettyPrint = ([...solutions]) => solutions
-    .map(({subStore, count}, solutionIndex) => {
-        return {
-            solutionNumber: solutionIndex + 1,
-            substitution: subStore
-                .map(({left, right}) => `${left.toString()}: ${right}`)
-                .join("\n\t\t"),
-            count: `${count}`
-        }
-    })
+    .map(({subStore, count}, solutionIndex) => ({
+        solutionNumber: solutionIndex + 1,
+        substitution: subStore
+            .map(({left, right}) => `${left.toString()}: ${right}`)
+            .join("\n\t\t"),
+        count: `${count}`
+    }))
     .forEach(({solutionNumber, substitution, count}) => {
         console.log(`Solution #${solutionNumber}:`);
         console.log(`\tNumber of LVars: ${count}`);
