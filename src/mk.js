@@ -1,8 +1,5 @@
-// microKanren
-
-// List
-const head = ([car]) => car;
-const tail = ([car, ...cdr]) => cdr;
+const { head, tail } = require("./util/array");
+const { unification } = require("./unification");
 
 // Stream
 const append$ = ($1, $2) => $1 instanceof Function
@@ -17,38 +14,13 @@ const appendMap$ = (g, $) => $ instanceof Function
         ? []
         : append$(appendMap$(g, tail($)), g(head($)));
 
-// Substitution Store
-const substitution = (left, right) => ({left, right});
-const substitutionStore = (left, right, store) => [substitution(left, right), ...store];
-const walkSubstitution = (u, store) => {
-    const pr = typeof u === "symbol" && store.find(({left}) => left === u);
-    return pr ? walkSubstitution(pr, store) : u;
-};
-const unification = (u, v, store) => {
-    u = walkSubstitution(u, store);
-    v = walkSubstitution(v, store);
-
-    if (u === v) {
-        return [...store];
-    } else if (typeof u === "symbol") {
-        return substitutionStore(u, v, store);
-    } else if (typeof v === "symbol") {
-        return substitutionStore(v, u, store);
-    } else if (Array.isArray(u) && Array.isArray(v)) {
-        store = unification(head(u), head(v), store);
-        return store && unification(tail(u), tail(cdr), store);
-    } else {
-        return false;
-    }
-};
-
 // TODO - Make constraints extendable to add any number of stores
 const constraints = (subStore, count) => ({subStore, count});
 
 // unify goal
 const unify = (u, v) => ({subStore, count}) => {
-    const s = unification(u, v, subStore);
-    return s ? [constraints(s, count)] : [];
+    const newSubStore = unification(u, v, subStore);
+    return newSubStore ? [constraints(newSubStore, count)] : [];
 };
 
 // fresh logic variable goal
