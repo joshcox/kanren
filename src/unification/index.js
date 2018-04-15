@@ -1,5 +1,7 @@
 const storeInArray = require("./substitution/store-array");
-const { head, tail } = require("../util/array");
+const {
+    array: { head, tail }
+} = require("../util");
 
 /**
  * @name Unification

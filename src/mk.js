@@ -1,18 +1,8 @@
-const { head, tail } = require("./util/array");
+const {
+    array: { head, tail }
+} = require("./util");
 const { unification } = require("./unification");
-
-// Stream
-const append$ = ($1, $2) => $1 instanceof Function
-    ? () => append$($2, $1())
-    : Array.isArray($1) && $1.length === 0
-        ? $2
-        : [head($1), ...append$(tail($1), $2)];
-
-const appendMap$ = (g, $) => $ instanceof Function
-    ? () => appendMap$(g, $())
-    : Array.isArray($) && $.length === 0
-        ? []
-        : append$(appendMap$(g, tail($)), g(head($)));
+const { append$, appendMap$ } = require("./stream");
 
 // TODO - Make constraints extendable to add any number of stores
 const constraints = (subStore, count) => ({subStore, count});
