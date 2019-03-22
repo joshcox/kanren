@@ -5,7 +5,7 @@
   "main": "./src/mk.js",
   "scripts": {
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "repository": {
     "type": "git",
@@ -22,8 +22,17 @@
     "url": "https://github.com/joshcox/microJSKanren/issues"
   },
   "homepage": "https://github.com/joshcox/microJSKanren#readme",
-  "dependencies": {},
+  "dependencies": {
+    "immutable": "^4.0.0-rc.12"
+  },
   "devDependencies": {
+    "@babel/core": "^7.3.4",
+    "@babel/preset-env": "^7.3.4",
+    "@babel/preset-typescript": "^7.3.3",
+    "@types/jest": "^24.0.11",
+    "babel-jest": "^24.5.0",
+    "jest": "^24.5.0",
+    "ts-jest": "^24.0.0",
     "typescript": "^3.3.3333"
   }
 }

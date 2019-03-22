@@ -1,63 +1,48 @@
-import { unification, ISubstitutionStore } from "./unification";
-import { append$, appendMap$ } from "./stream";
-import { Term } from "./term";
+import { unification, ISubstitution } from "./unification";
+import { mplus, bind, take, takeAll } from "./data/Stream";
+import { Term } from "./data/term";
+import { List } from "immutable";
+import { IConstraints, defaultConstraints } from "./data/constraints";
+import { Goal } from "./data/Goal";
 
-interface IConstraints {
-    substitutionStore: ISubstitutionStore;
-    count: number;
-}
-
-const constraints = (substitutionStore: ISubstitutionStore, count: number): IConstraints =>
-    ({ substitutionStore, count });
-
-type Goal = (constraints: IConstraints) => IConstraints[];
+export { Term } from "./data/term";
 
 // unify goal
-export const unify = (u: Term, v: Term) => ({ substitutionStore, count }: IConstraints) => {
-    const newSubStore = unification(u, v, substitutionStore);
-    return newSubStore ? [constraints(newSubStore, count)] : [];
-};
+export const unify = (u: Term, v: Term): Goal =>
+    ({ substitutionStore, count }) => {
+        const newSubStore = unification(u, v, substitutionStore);
+        return newSubStore ? List([{ substitutionStore: newSubStore, count }]) : List();
+    };
 
 // fresh logic variable goal
-export const callWithFresh = (f: (a: symbol) => Goal) =>
-    ({ substitutionStore, count }: IConstraints) =>
-        f(Symbol(count))(constraints(substitutionStore, count + 1));
+export const callWithFresh = (f: (a: symbol) => Goal): Goal =>
+    ({ substitutionStore, count }) =>
+        f(Symbol(count))({ substitutionStore, count: count + 1 });
 
 // disjunction/or goal
-export const disj = (g1: Goal, g2: Goal) =>
-    (constraints: IConstraints) =>
-        append$(g1(constraints), g2(constraints));
+export const disj = (g1: Goal, g2: Goal): Goal =>
+    (constraints) => mplus(g1(constraints), g2(constraints));
 
 // conjunction/and goal
-export const conj = (g1: Goal, g2: Goal) =>
-    (constraints: IConstraints) =>
-        appendMap$(g2, g1(constraints));
+export const conj = (g1: Goal, g2: Goal): Goal =>
+    (constraints) => bind(g2, g1(constraints));
 
-// bootstrapper
-const callWithEmptyState = (g: Goal) => g(constraints([], 0));
+// Run a goal against
+const call = (g: Goal, constraints: IConstraints) => g({ ...constraints });
 
-const foo = callWithEmptyState(
-    conj(
-        callWithFresh(a => unify(a, "seven")),
-        callWithFresh(b => disj(
-            unify(b, "five"),
-            unify(b, "six")
-        ))
-    )
-);
+export { take, takeAll } from "./data/Stream";
 
-const prettyPrint = ([...solutions]: IConstraints[]) => solutions
-    .map(({ substitutionStore, count }, solutionIndex) => ({
-        solutionNumber: solutionIndex + 1,
-        substitution: substitutionStore
-            .map(({ left, right }) => `${left.toString()}: ${right.toString()}`)
-            .join("\n\t\t"),
-        count: `${count}`
-    }))
-    .forEach(({ solutionNumber, substitution, count }) => {
-        console.log(`Solution #${solutionNumber}:`);
-        console.log(`\tNumber of LVars: ${count}`);
-        console.log(`\tSubstitution Store:\n\t\t${substitution}`);
-    });
+export interface IRunOptions {
+    numberOfSolutions: number;
+    goal: Goal;
+    constraints?: Partial<{
+        substitutionStore: ISubstitution[];
+        count: number;
+    }>;
+}
 
-prettyPrint(foo);
+export const run = ({ numberOfSolutions, goal, constraints: { substitutionStore = [], count = 0 } = {} }: IRunOptions) =>
+    take(numberOfSolutions)(call(goal, { substitutionStore: List(substitutionStore), count }));
+
+export const runAll = ({ goal, constraints: { substitutionStore = [], count = 0 } = {} }: Pick<IRunOptions, Exclude<keyof IRunOptions, "numberOfSolutions">>) =>
+    takeAll(call(goal, { substitutionStore: List(substitutionStore), count }));
