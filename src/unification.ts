@@ -1,24 +1,20 @@
 import { List } from "immutable";
-import { Term } from "./data/term";
+import { Term } from "./data/Term";
 
 export interface ISubstitution { left: symbol; right: Term }
 
- /**
- * Creates a substitution pair where the left associates to the right
- */
-const substitution = (left: symbol, right: Term): ISubstitution => ({left, right});
+/**
+* Creates a substitution pair where the left associates to the right
+*/
+const substitution = (left: symbol, right: Term): ISubstitution => ({ left, right });
 
 /**
  * Follows an associative path to find what the input (`term`) is
  * equivalent to. When no substitution association is made, the result
  * is the input (`term`).
- * @function walk
- * @param {*} term - the starting term
- * @param {Array<{left: *, right: *}>} store - the substitution array being walked
- * @returns {*}
  */
 const walk = (term: Term, store: List<ISubstitution>): Term => {
-    const pr = typeof term === "symbol" && store.find(({left}) => left === term);
+    const pr = typeof term === "symbol" && store.find(({ left }) => left === term);
     return pr ? walk(pr.right, store) : term;
 };
 

@@ -1,11 +1,11 @@
 import { unification, ISubstitution } from "./unification";
 import { mplus, bind, take, takeAll } from "./data/Stream";
-import { Term } from "./data/term";
+import { Term } from "./data/Term";
 import { List } from "immutable";
-import { IConstraints, defaultConstraints } from "./data/constraints";
+import { IState, emptyState } from "./data/Constraints";
 import { Goal } from "./data/Goal";
 
-export { Term } from "./data/term";
+export { Term } from "./data/Term";
 
 // unify goal
 export const unify = (u: Term, v: Term): Goal =>
@@ -28,9 +28,7 @@ export const conj = (g1: Goal, g2: Goal): Goal =>
     (constraints) => bind(g2, g1(constraints));
 
 // Run a goal against
-const call = (g: Goal, constraints: IConstraints) => g({ ...constraints });
-
-export { take, takeAll } from "./data/Stream";
+const call = (g: Goal, constraints: IState) => g({ ...constraints });
 
 export interface IRunOptions {
     numberOfSolutions: number;

@@ -1,99 +1,167 @@
-import { conj, disj, callWithFresh, unify, run, runAll, Term } from "./mk";
+import { unify, runAll, Term, conj, run, disj } from "./mk";
+import { IState } from "./data/constraints";
+import { List } from "immutable";
+import { Goal } from "./data/Goal";
+import { Stream } from "./data/Stream";
 
-
-// const iota = (n: number): Goal =>
-//     callWithFresh(b => disj(
-//         unify(b, 1),
-//         (c: IConstraints) => () => iota(n + 1)(c)
-//     ));
-
-// const iotaExample = (): Goal =>
-//     conj(callWithFresh(a => unify(a, "seven")), iota(0));
-
-// const simple = () => callWithEmptyState(
-//     conj(
-//         callWithFresh(a => unify(a, "seven")),
-//         callWithFresh(b => disj(
-//             unify(b, "five"),
-//             unify(b, "six")
-//         ))
-//     )
-// );
-
-// const prettyPrint = (n: number, solutions: Stream<IConstraints>) => {
-//     // debugger;
-//     return take(n)(solutions)
-//         .map(({ substitutionStore, count }, solutionIndex) => {
-//             // debugger;
-//             return ({
-//                 solutionNumber: solutionIndex + 1,
-//                 substitution: substitutionStore
-//                     .map(({ left, right }) => `${left.toString()}: ${right.toString()}`)
-//                     .join("\n\t\t"),
-//                 count: `${count}`
-//             });
-//         })
-//         .forEach(({ solutionNumber, substitution, count }) => {
-//             console.log(`Solution #${solutionNumber}:`);
-//             console.log(`\tNumber of LVars: ${count}`);
-//             console.log(`\tSubstitution Store:\n\t\t${substitution}`);
-//         });
-// };
-
-// prettyPrint(5, simple);
-// prettyPrint(5, callWithEmptyState(iotaExample()));
+const hasSolutions = (solutions: List<IState>): boolean => !solutions.isEmpty();
 
 describe("mk", () => {
     describe("core", () => {
-        describe("unify", () => {
-            const doesItUnify = (t1: Term, t2: Term): boolean => !runAll({ goal: unify(t1, t2) }).isEmpty()
+        describe("aggregator goals", () => {
+            const succeed = (state: IState): Stream<IState> => List<IState>([state]);
+            const fail = (_: IState): Stream<IState> => List<IState>([]);
 
-            it("does not unify unlike terms", () => {
-                expect(doesItUnify(1, 2)).toBeFalsy();
-                expect(doesItUnify("a", "b")).toBeFalsy();
-                expect(doesItUnify([1], [])).toBeFalsy();
-                expect(doesItUnify(true, false)).toBeFalsy();
+            describe("conj", () => {
+                it("evaluates to the empty set when one, the other, or both goals do not succeed in the state", () => {
+                    expect(hasSolutions(runAll({ goal: conj(succeed, fail) }))).toBeFalsy();
+                    expect(hasSolutions(runAll({ goal: conj(fail, succeed) }))).toBeFalsy();
+                    expect(hasSolutions(runAll({ goal: conj(fail, fail) }))).toBeFalsy();
+                });
+
+                it("evaluates to a non-empty set when both goals succeed in the state", () => {
+                    expect(hasSolutions(runAll({ goal: conj(succeed, succeed) }))).toBeTruthy();
+                });
             });
 
-            it("unifies like terms in an empty substitution", () => {
-                expect(doesItUnify(1, 1)).toBeTruthy();
-                expect(doesItUnify("a", "a")).toBeTruthy();
-                expect(doesItUnify(true, true)).toBeTruthy();
-                expect(doesItUnify([], [])).toBeTruthy();
-                expect(doesItUnify([1], [1])).toBeTruthy();
-                expect(doesItUnify([[1]], [[1]])).toBeTruthy();
-            });
+            describe("disj", () => {
+                it("evaluated to a non-empty set when one, the other, or both goals succeed in the state", () => {
+                    expect(hasSolutions(runAll({ goal: disj(succeed, fail) }))).toBeTruthy();
+                    expect(hasSolutions(runAll({ goal: disj(succeed, succeed) }))).toBeTruthy();
+                    expect(hasSolutions(runAll({ goal: disj(succeed, succeed) }))).toBeTruthy();
+                });
 
-            it("unifies symbols with anything in an empty state", () => {
-                expect(doesItUnify(Symbol("a"), Symbol("b"))).toBeTruthy();
-                expect(doesItUnify(Symbol("a"), 1)).toBeTruthy();
-                expect(doesItUnify(Symbol("a"), "2")).toBeTruthy();
-                expect(doesItUnify(Symbol("a"), true)).toBeTruthy();
-                expect(doesItUnify(Symbol("a"), [])).toBeTruthy();
-            });
-
-            it("does not unify symbols to any new terms, except symbols", () => {
-                const testSymbol = Symbol("testSymbol");
-
-                const doesItUnifyInState = (right: Term) => (t1: Term, t2: Term): boolean => !runAll({
-                    goal: unify(t1, t2),
-                    constraints: { substitutionStore: [{ left: testSymbol, right }], count: 1 }
-                }).isEmpty();
-
-                const doesItUnifyWith1 = doesItUnifyInState(1);
-
-                expect(doesItUnifyWith1(testSymbol, Symbol("b"))).toBeTruthy();
-
-                expect(doesItUnifyWith1(testSymbol, 2)).toBeFalsy();
-                expect(doesItUnifyWith1(testSymbol, "2")).toBeFalsy();
-                expect(doesItUnifyWith1(testSymbol, true)).toBeFalsy();
-                expect(doesItUnifyWith1(testSymbol, [])).toBeFalsy();
+                it("evaluates to the empty set when neither goal succeeds", () => {
+                    expect(hasSolutions(runAll({ goal: disj(fail, fail) }))).toBeFalsy();
+                });
             });
         });
 
-        xdescribe("conj", () => {
+        describe("constraint goals", () => {
+            describe("unify", () => {
+                const canUnify = (goal: Goal): boolean => hasSolutions(runAll({ goal }));
 
+                describe("symbols (logic variables)", () => {
+                    it("can be unified with a symbol", () => {
+                        expect(canUnify(unify(Symbol("a"), Symbol("b")))).toBeTruthy();
+                    });
+                });
+
+                describe("array terms", () => {
+                    it("can be unified with a symbol", () => {
+                        expect(canUnify(unify([], Symbol("[]")))).toBeTruthy();
+                        expect(canUnify(unify(Symbol("[]"), []))).toBeTruthy();
+                        const lvar = Symbol("lvar");
+                        expect(canUnify(conj(unify(lvar, [2]), unify(lvar, [2])))).toBeTruthy();
+                    });
+
+                    it("cannot be unified with a symbol that's been unified to another term", () => {
+                        const lvar = Symbol("lvar");
+                        expect(canUnify(conj(unify(lvar, 1), unify(lvar, [2])))).toBeFalsy();
+                        expect(canUnify(conj(unify(lvar, true), unify(lvar, [2])))).toBeFalsy();
+                        expect(canUnify(conj(unify(lvar, false), unify(lvar, [2])))).toBeFalsy();
+                        expect(canUnify(conj(unify(lvar, []), unify(lvar, [2])))).toBeFalsy();
+                        expect(canUnify(conj(unify(lvar, ""), unify(lvar, [2])))).toBeFalsy();
+                    });
+
+                    it("can be unified with other arrays of the same known structure", () => {
+                        expect(canUnify(unify([], []))).toBeTruthy();
+                        expect(canUnify(unify([1], [1]))).toBeTruthy();
+                        expect(canUnify(unify([1, [2]], [1, [2]]))).toBeTruthy();
+                        expect(canUnify(unify([Symbol("a")], [1]))).toBeTruthy();
+                    });
+
+                    it("cannot be unified with other arrays of different structures", () => {
+                        expect(canUnify(unify([], [1]))).toBeFalsy();
+                        const lvar = Symbol("lvar");
+                        expect(canUnify(conj(unify(lvar, 1), unify([lvar], [2])))).toBeFalsy();
+                    });
+                });
+
+                describe("number terms", () => {
+                    it("can be unified with a symbol", () => {
+                        expect(canUnify(unify(1, Symbol("1")))).toBeTruthy();
+                        expect(canUnify(unify(Symbol("1"), 1))).toBeTruthy();
+                        const lvar = Symbol("lvar");
+                        expect(canUnify(conj(unify(lvar, 1), unify(lvar, 1)))).toBeTruthy();
+                    });
+
+                    it("cannot be unified with a symbol that's been unified to another term", () => {
+                        const lvar = Symbol("lvar");
+                        expect(canUnify(conj(unify(lvar, 2), unify(lvar, 1)))).toBeFalsy();
+                        expect(canUnify(conj(unify(lvar, true), unify(lvar, 1)))).toBeFalsy();
+                        expect(canUnify(conj(unify(lvar, false), unify(lvar, 1)))).toBeFalsy();
+                        expect(canUnify(conj(unify(lvar, []), unify(lvar, 1)))).toBeFalsy();
+                        expect(canUnify(conj(unify(lvar, ""), unify(lvar, 1)))).toBeFalsy();
+                    });
+
+                    it("can be unified with other numbers of the same known structure", () => {
+                        expect(canUnify(unify(1, 1))).toBeTruthy();
+                        expect(canUnify(unify(2, 2))).toBeTruthy();
+                    });
+
+                    it("cannot be unified with other numbers of different structures", () => {
+                        expect(canUnify(unify(1, 2))).toBeFalsy();
+                        const lvar = Symbol("lvar");
+                        expect(canUnify(conj(unify(lvar, 1), unify(lvar, 2)))).toBeFalsy();
+                    });
+                });
+
+                describe("boolean terms", () => {
+                    it("can be unified with a symbol", () => {
+                        expect(canUnify(unify(true, Symbol("true")))).toBeTruthy();
+                        expect(canUnify(unify(Symbol("true"), true))).toBeTruthy();
+                        const lvar = Symbol("lvar");
+                        expect(canUnify(conj(unify(lvar, true), unify(lvar, true)))).toBeTruthy();
+                    });
+
+                    it("cannot be unified with a symbol that's been unified to another term", () => {
+                        const lvar = Symbol("lvar");
+                        expect(canUnify(conj(unify(lvar, 2), unify(lvar, true)))).toBeFalsy();
+                        expect(canUnify(conj(unify(lvar, false), unify(lvar, true)))).toBeFalsy();
+                        expect(canUnify(conj(unify(lvar, []), unify(lvar, true)))).toBeFalsy();
+                        expect(canUnify(conj(unify(lvar, ""), unify(lvar, true)))).toBeFalsy();
+                    });
+
+                    it("can be unified with other booleans of the same known structure", () => {
+                        expect(canUnify(unify(true, true))).toBeTruthy();
+                        expect(canUnify(unify(false, false))).toBeTruthy();
+                    });
+
+                    it("cannot be unified with other booleans of different structures", () => {
+                        expect(canUnify(unify(true, false))).toBeFalsy();
+                        const lvar = Symbol("lvar");
+                        expect(canUnify(conj(unify(lvar, true), unify(lvar, false)))).toBeFalsy();
+                    });
+                });
+
+                describe("string terms", () => {
+                    it("can be unified with a symbol", () => {
+                        expect(canUnify(unify("", Symbol("")))).toBeTruthy();
+                        expect(canUnify(unify(Symbol(""), ""))).toBeTruthy();
+                        const lvar = Symbol("lvar");
+                        expect(canUnify(conj(unify(lvar, ""), unify(lvar, "")))).toBeTruthy();
+                    });
+
+                    it("cannot be unified with a symbol that's been unified to another term", () => {
+                        const lvar = Symbol("lvar");
+                        expect(canUnify(conj(unify(lvar, 2), unify(lvar, "")))).toBeFalsy();
+                        expect(canUnify(conj(unify(lvar, false), unify(lvar, "")))).toBeFalsy();
+                        expect(canUnify(conj(unify(lvar, []), unify(lvar, "")))).toBeFalsy();
+                    });
+
+                    it("can be unified with other strings of the same known structure", () => {
+                        expect(canUnify(unify("", ""))).toBeTruthy();
+                        expect(canUnify(unify("a", "a"))).toBeTruthy();
+                    });
+
+                    it("cannot be unified with other strings of different structures", () => {
+                        expect(canUnify(unify("a", "b"))).toBeFalsy();
+                        const lvar = Symbol("lvar");
+                        expect(canUnify(conj(unify(lvar, "a"), unify(lvar, "b")))).toBeFalsy();
+                    });
+                });
+            });
         });
     });
-
 });
