@@ -10,9 +10,9 @@ type Substitution = List<ISubstitution>;
  * equivalent to. When no substitution association is made, the result
  * is the input (`term`).
  */
-const walk = (term: Term, store: List<ISubstitution>): Term => {
-    const pr = typeof term === "symbol" && store.find(({ left }) => left === term);
-    return pr ? walk(pr.right, store) : term;
+const walk = (term: Term, substitution: Substitution): Term => {
+    const pr = typeof term === "symbol" && substitution.find(({ left }) => left === term);
+    return pr ? walk(pr.right, substitution) : term;
 };
 
 export const unification = (t1: Term, t2: Term, substitution: Substitution | false): Substitution | false => {

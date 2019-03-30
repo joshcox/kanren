@@ -1,4 +1,4 @@
-import { unify, runAll, Term, conj, run, disj } from "./mk";
+import { unify, runAll, conj, disj } from "./mk";
 import { IState } from "./data/constraints";
 import { List } from "immutable";
 import { Goal } from "./data/Goal";
