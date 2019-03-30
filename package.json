@@ -1,5 +1,5 @@
 {
-  "name": "kanrenjs",
+  "name": "kanren",
   "version": "0.0.0",
   "description": "A port of the microKanren implementation by Jason Hemann and Daniel P. Friedman.",
   "main": "./src/mk.js",

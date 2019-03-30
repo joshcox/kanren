@@ -1,4 +1,4 @@
-import { IState } from "./Constraints";
+import { IState } from "./State";
 import { Stream } from "./Stream";
 
 /**

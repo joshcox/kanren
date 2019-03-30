@@ -1,5 +1,5 @@
 import { unify, runAll, conj, disj } from "./mk";
-import { IState } from "./data/constraints";
+import { IState } from "./data/State";
 import { List } from "immutable";
 import { Goal } from "./data/Goal";
 import { Stream } from "./data/Stream";

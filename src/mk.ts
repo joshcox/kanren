@@ -2,7 +2,7 @@ import { unification } from "./unification";
 import { append, appendMap, take, takeAll, Stream } from "./data/Stream";
 import { Term } from "./data/Term";
 import { List } from "immutable";
-import { IState } from "./data/Constraints";
+import { IState } from "./data/State";
 import { Goal } from "./data/Goal";
 
 export { Term } from "./data/Term";
