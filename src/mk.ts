@@ -1,5 +1,5 @@
 import { unification } from "./unification";
-import { mplus, bind, take, takeAll } from "./data/Stream";
+import { append, appendMap, take, takeAll } from "./data/Stream";
 import { Term } from "./data/Term";
 import { List } from "immutable";
 import { IState } from "./data/Constraints";
@@ -21,11 +21,11 @@ export const callWithFresh = (f: (a: symbol) => Goal): Goal =>
 
 // disjunction/or goal
 export const disj = (g1: Goal, g2: Goal): Goal =>
-    (constraints) => mplus(g1(constraints), g2(constraints));
+    (constraints) => append(g1(constraints), g2(constraints));
 
 // conjunction/and goal
 export const conj = (g1: Goal, g2: Goal): Goal =>
-    (constraints) => bind(g2, g1(constraints));
+    (constraints) => appendMap(g2, g1(constraints));
 
 // Run a goal against
 const call = (g: Goal, constraints: Partial<IState>) => g({ count: 0, substitution: List(), ...constraints });

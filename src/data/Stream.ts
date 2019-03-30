@@ -31,13 +31,13 @@ export const isMature = <A>($: Stream<A>): $ is List<A> => List.isList($);
 /**
  * Appends one [[Stream]] onto another
  */
-export const mplus = <A>($1: Stream<A>, $2: Stream<A>): Stream<A> => {
-    if (isLazy($1)) return () => mplus($2, $1());
+export const append = <A>($1: Stream<A>, $2: Stream<A>): Stream<A> => {
+    if (isLazy($1)) return () => append($2, $1());
     if (List.isList($1) && $1.isEmpty()) return $2;
 
-    const newList = mplus($1.shift(), $2);
+    const newList = append($1.shift(), $2);
     return (isLazy(newList))
-        ? () => mplus(List([$1.get(0)]), newList)
+        ? () => append(List([$1.get(0)]), newList)
         : newList.unshift($1.get(0));
 };
 
@@ -45,10 +45,10 @@ export const mplus = <A>($1: Stream<A>, $2: Stream<A>): Stream<A> => {
  * Maps a [[Stream]]-returning function across the items of a [[Stream]], appending
  * each resulting stream.
  */
-export const bind = <A>(g: (a: A) => Stream<A>, $: Stream<A>): Stream<A> => {
-    if (isLazy($)) return () => bind(g, $());
+export const appendMap = <A>(g: (a: A) => Stream<A>, $: Stream<A>): Stream<A> => {
+    if (isLazy($)) return () => appendMap(g, $());
     if (List.isList($) && $.isEmpty()) return $;
-    return mplus(bind(g, $.shift()), g($.get(0)));
+    return append(appendMap(g, $.shift()), g($.get(0)));
 };
 
 /**
