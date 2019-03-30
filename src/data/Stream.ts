@@ -69,34 +69,30 @@ function* puller<A>($: Stream<A>) {
     }
 }
 
+export const taker = <A>(fn: (results: List<A>, result: IteratorResult<A>) => boolean) =>
+    ($: Stream<A>): List<A> => {
+        const pull = puller($);
+        let cont = true;
+        let results = List();
+        let result = pull.next();
+        while (cont && !result.done) {
+            results = results.push(result.value);
+            result = pull.next();
+            cont = fn(results, result);
+        }
+        return results;
+    }
+
 /**
  * Pull up to `n` values from a [[Stream]].
  *
  * NOTE: Can lead to an infinite loop
  */
-export const take = (n: number) => <A>($: Stream<A>): List<A> => {
-    const pull = puller($);
-    let results = List();
-    let result = pull.next();
-    while (n-- > 0 && !result.done) {
-        results = results.push(result.value);
-        result = pull.next();
-    }
-    return results;
-}
+export const take = <A>(n: number) => taker<A>((results) => results.size === n);
 
 /**
  * Pull all values from a [[Stream]].
  *
  * NOTE: Can lead to an infinite loop
  */
-export const takeAll = <A>($: Stream<A>): List<A> => {
-    const pull = puller($);
-    let results = List();
-    let result = pull.next();
-    while (!result.done) {
-        results = results.push(result.value);
-        result = pull.next();
-    }
-    return results;
-}
+export const takeAll = <A>($: Stream<A>) => taker<A>(() => true)($);

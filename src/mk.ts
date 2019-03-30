@@ -1,5 +1,5 @@
 import { unification } from "./unification";
-import { append, appendMap, take, takeAll } from "./data/Stream";
+import { append, appendMap, take, takeAll, Stream } from "./data/Stream";
 import { Term } from "./data/Term";
 import { List } from "immutable";
 import { IState } from "./data/Constraints";
@@ -31,15 +31,15 @@ export const conj = (g1: Goal, g2: Goal): Goal =>
 const call = (g: Goal, constraints: Partial<IState>) => g({ count: 0, substitution: List(), ...constraints });
 
 export interface IRunOptions {
-    numberOfSolutions: number;
     goal: Goal;
     constraints?: Partial<IState>;
 }
 
-export const run = ({ numberOfSolutions, goal, constraints = {} }: IRunOptions) =>
-    take(numberOfSolutions)(call(goal, constraints));
+export const runner = (take: ($: Stream<IState>) => List<IState>) =>
+    ({ goal, constraints = {} }: IRunOptions) =>
+        take(call(goal, constraints))
 
-type Omit<O, K> = Pick<O, Exclude<keyof O, K>>;
+export const run = ({ numberOfSolutions, ...options }: IRunOptions & { numberOfSolutions: number }) =>
+    runner(take(numberOfSolutions))(options);
 
-export const runAll = ({ goal, constraints = {} }: Omit<IRunOptions, "numberOfSolutions">) =>
-    takeAll(call(goal, constraints));
+export const runAll = runner(takeAll);
