@@ -3,10 +3,7 @@ import { Term } from "./data/Term";
 
 export interface ISubstitution { left: symbol; right: Term }
 
-/**
-* Creates a substitution pair where the left associates to the right
-*/
-const substitution = (left: symbol, right: Term): ISubstitution => ({ left, right });
+type Substitution = List<ISubstitution>;
 
 /**
  * Follows an associative path to find what the input (`term`) is
@@ -18,26 +15,19 @@ const walk = (term: Term, store: List<ISubstitution>): Term => {
     return pr ? walk(pr.right, store) : term;
 };
 
-export const unification = (term1: Term, term2: Term, substitutionStore: List<ISubstitution> | false): List<ISubstitution> | false => {
-    if (substitutionStore === false) return false;
+export const unification = (t1: Term, t2: Term, substitution: Substitution | false): Substitution | false => {
+    if (substitution === false) return false;
 
-    term1 = walk(term1, substitutionStore);
-    term2 = walk(term2, substitutionStore);
+    t1 = walk(t1, substitution);
+    t2 = walk(t2, substitution);
 
-    if (term1 === term2) {
-        return substitutionStore;
-    } else if (typeof term1 === "symbol") {
-        return substitutionStore.unshift(substitution(term1, term2));
-        // store(substitution(term1, term2), ...substitutionStore);
-    } else if (typeof term2 === "symbol") {
-        return substitutionStore.unshift(substitution(term2, term1));
-        // return store(substitution(term2, term1), ...substitutionStore);
-    } else if (Array.isArray(term1) && Array.isArray(term2)) {
-        if (term1.length === 0 && term2.length === 0) return substitutionStore;
-        const [head1, ...tail1] = term1;
-        const [head2, ...tail2] = term2;
-        return unification(tail1, tail2, unification(head1, head2, substitutionStore));
-    } else {
-        return false;
-    }
+    if (t1 === t2) return substitution;
+    else if (typeof t1 === "symbol") return substitution.unshift({ left: t1, right: t2 });
+    else if (typeof t2 === "symbol") return substitution.unshift({ left: t2, right: t1 });
+    else if (Array.isArray(t1) && Array.isArray(t2) && t1.length === 0 && t2.length === 0) return substitution;
+    else if (Array.isArray(t1) && Array.isArray(t2)) return unification(
+        t1.slice(1, t1.length - 1),
+        t2.slice(1, t2.length - 1),
+        unification(t1[0], t2[0], substitution));
+    else return false;
 };
