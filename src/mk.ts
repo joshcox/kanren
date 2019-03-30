@@ -17,7 +17,7 @@ export const unify = (u: Term, v: Term): Goal =>
 // fresh logic variable goal
 export const callWithFresh = (f: (a: symbol) => Goal): Goal =>
     ({ substitution, count }) =>
-        f(Symbol(count))({ substitution, count: count + 1 });
+        f(Symbol.for(`${count}`))({ substitution, count: count + 1 });
 
 // disjunction/or goal
 export const disj = (g1: Goal, g2: Goal): Goal =>
