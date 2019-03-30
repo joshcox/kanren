@@ -21,23 +21,23 @@ export const callWithFresh = (f: (a: symbol) => Goal): Goal =>
 
 // disjunction/or goal
 export const disj = (g1: Goal, g2: Goal): Goal =>
-    (constraints) => append(g1(constraints), g2(constraints));
+    (state) => append(g1(state), g2(state));
 
 // conjunction/and goal
 export const conj = (g1: Goal, g2: Goal): Goal =>
-    (constraints) => appendMap(g2, g1(constraints));
+    (state) => appendMap(g2, g1(state));
 
 // Run a goal against
-const call = (g: Goal, constraints: Partial<IState>) => g({ count: 0, substitution: List(), ...constraints });
+const call = (g: Goal, state: Partial<IState>) => g({ count: 0, substitution: List(), ...state });
 
 export interface IRunOptions {
     goal: Goal;
-    constraints?: Partial<IState>;
+    state?: Partial<IState>;
 }
 
 export const runner = (take: ($: Stream<IState>) => List<IState>) =>
-    ({ goal, constraints = {} }: IRunOptions) =>
-        take(call(goal, constraints))
+    ({ goal, state = {} }: IRunOptions) =>
+        take(call(goal, state))
 
 export const run = ({ numberOfSolutions, ...options }: IRunOptions & { numberOfSolutions: number }) =>
     runner(take(numberOfSolutions))(options);
