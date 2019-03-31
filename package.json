@@ -4,7 +4,7 @@
   "description": "A port of the microKanren implementation by Jason Hemann and Daniel P. Friedman.",
   "main": "./src/mk.js",
   "scripts": {
-    "build": "tsc",
+    "compile": "tsc",
     "test": "jest"
   },
   "repository": {
