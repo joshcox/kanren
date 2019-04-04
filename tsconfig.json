@@ -3,7 +3,8 @@
         "outDir": "lib",
         "sourceMap": true,
         "noImplicitAny": true,
-        "module": "commonjs",
+        "module": "es6",
+        "esModuleInterop": true,
         "target": "es5"
     }
 }
