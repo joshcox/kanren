@@ -1,4 +1,8 @@
-`kanren`
+[![build status](https://api.travis-ci.org/joshcox/kanren.png?branch=master)](http://travis-ci.org/joshcox/kanren)
+[![npm version](https://badge.fury.io/js/kanren.svg)](https://badge.fury.io/js/kanren)
+
+# `kanren`
+- [`kanren`](#kanren)
 - [Introduction](#introduction)
 - [Development](#development)
   - [Editor of Choice](#editor-of-choice)
