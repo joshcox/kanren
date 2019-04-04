@@ -1,27 +1,33 @@
 {
   "name": "kanren",
-  "version": "0.0.0",
-  "description": "A port of the microKanren implementation by Jason Hemann and Daniel P. Friedman.",
-  "main": "./src/mk.js",
+  "version": "0.1.0",
+  "description": "Typescript flavored microKanren implementation",
+  "files": [
+    "lib"
+  ],
+  "main": "./lib/mk.js",
   "scripts": {
     "compile": "tsc",
+    "prepublishOnly": "npm run compile",
     "test": "jest"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/joshcox/microJSKanren.git"
+    "url": "git+https://github.com/joshcox/kanren.git"
   },
   "keywords": [
+    "constraints",
     "kanren",
+    "logic",
     "micro",
-    "logic"
+    "relational"
   ],
-  "author": "Josh Cox",
+  "author": "joshcox",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/joshcox/microJSKanren/issues"
+    "url": "https://github.com/joshcox/kanren/issues"
   },
-  "homepage": "https://github.com/joshcox/microJSKanren#readme",
+  "homepage": "https://github.com/joshcox/kanren#readme",
   "dependencies": {
     "immutable": "^4.0.0-rc.12"
   },
