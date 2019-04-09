@@ -13,6 +13,7 @@ Kanren is a port of [`microKanren`](https://github.com/jasonhemann/microKanren) 
 The initial goal with this particular port is to provide an API that can easily be extended to include additional term types and constraints.
 
 # Work in Progress
+* Benchmarking
 * Constraint Extensions - Extend `kanren` with custom constraints
 * Term type Extensions - Extend `kanren` with custom term types
   * [ ] Hook new terms into `unification` algorithm via a predicate and a unifier
