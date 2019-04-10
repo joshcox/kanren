@@ -1,4 +1,4 @@
-import { kanren } from "./mk";
+import { kanren } from "./kanren";
 import { IState } from "./data/State";
 import { List } from "immutable";
 import { Goal } from "./data/Goal";
