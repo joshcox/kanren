@@ -21,8 +21,8 @@ interface IKanren {
     conj(g1: Goal, g2: Goal): Goal;
     disj(g1: Goal, g2: Goal): Goal;
     unify(u: Term, v: Term): Goal;
-    runAll(opts: IRunOptions): List<IState>;
     run(opts: IRunOptions & { numberOfSolutions: number }): List<IState>;
+    runAll(opts: IRunOptions): List<IState>;
 }
 
 /**
@@ -35,44 +35,22 @@ interface IKanren {
  * ```
  */
 export const kanren = ({ }: IKanrenOptions): IKanren => {
-    // unify goal
-    const unify = (u: Term, v: Term): Goal =>
-        ({ substitution: substitutionStore, count }) => {
-            const newSubStore = unification(u, v, substitutionStore);
-            return newSubStore ? List([{ substitution: newSubStore, count }]) : List();
-        };
 
-    // fresh logic variable goal
-    const callWithFresh = (f: (a: symbol) => Goal): Goal =>
-        ({ substitution, count }) =>
-            f(Symbol.for(`${count}`))({ substitution, count: count + 1 });
-
-    // disjunction/or goal
-    const disj = (g1: Goal, g2: Goal): Goal =>
-        (state) => append(g1(state), g2(state));
-
-    // conjunction/and goal
-    const conj = (g1: Goal, g2: Goal): Goal =>
-        (state) => appendMap(g2, g1(state));
-
-    // Run a goal against
     const call = (g: Goal, state: Partial<IState>) => g({ count: 0, substitution: List(), ...state });
 
     const runner = (take: ($: Stream<IState>) => List<IState>) =>
         ({ goal, state = {} }: IRunOptions) =>
-            take(call(goal, state))
-
-    const run = ({ numberOfSolutions, ...options }: IRunOptions & { numberOfSolutions: number }) =>
-        runner(take(numberOfSolutions))(options);
-
-    const runAll = runner(takeAll);
+            take(call(goal, state));
 
     return {
-        unify,
-        callWithFresh,
-        disj,
-        conj,
-        run,
-        runAll
+        callWithFresh: (f) => ({ substitution, count }) => f(Symbol.for(`${count}`))({ substitution, count: count + 1 }),
+        conj: (g1, g2) => (state) => appendMap(g2, g1(state)),
+        disj: (g1, g2) => (state) => append(g1(state), g2(state)),
+        unify: (u, v) => ({ substitution, count }) => {
+            const newSubStore = unification(u, v, substitution);
+            return newSubStore ? List([{ substitution: newSubStore, count }]) : List();
+        },
+        run: ({ numberOfSolutions, ...options }) => runner(take(numberOfSolutions))(options),
+        runAll: runner(takeAll)
     };
 }
