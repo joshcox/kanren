@@ -4,7 +4,7 @@ import { List } from "immutable";
 import { Goal } from "./data/Goal";
 import { Stream } from "./data/Stream";
 
-const { unify, runAll, conj, disj, callWithFresh } = kanren();
+const { unify, runAll, conj, disj, callWithFresh } = kanren({});
 
 const hasSolutions = (solutions: List<IState>): boolean => !solutions.isEmpty();
 

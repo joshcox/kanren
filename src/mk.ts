@@ -7,6 +7,24 @@ import { Goal } from "./data/Goal";
 
 export { Term } from "./data/Term";
 
+interface IRunOptions {
+    goal: Goal;
+    state?: Partial<IState>;
+}
+
+interface IKanrenOptions {
+
+}
+
+interface IKanren {
+    callWithFresh(f: (a: symbol) => Goal): Goal;
+    conj(g1: Goal, g2: Goal): Goal;
+    disj(g1: Goal, g2: Goal): Goal;
+    unify(u: Term, v: Term): Goal;
+    runAll(opts: IRunOptions): List<IState>;
+    run(opts: IRunOptions & { numberOfSolutions: number }): List<IState>;
+}
+
 /**
  * Initialize a kanren library. The library can be accessed as properties on the resulting object.
  *
@@ -16,7 +34,7 @@ export { Term } from "./data/Term";
  * runAll(unify(1, 1));
  * ```
  */
-export const kanren = () => {
+export const kanren = ({ }: IKanrenOptions): IKanren => {
     // unify goal
     const unify = (u: Term, v: Term): Goal =>
         ({ substitution: substitutionStore, count }) => {
@@ -39,11 +57,6 @@ export const kanren = () => {
 
     // Run a goal against
     const call = (g: Goal, state: Partial<IState>) => g({ count: 0, substitution: List(), ...state });
-
-    interface IRunOptions {
-        goal: Goal;
-        state?: Partial<IState>;
-    }
 
     const runner = (take: ($: Stream<IState>) => List<IState>) =>
         ({ goal, state = {} }: IRunOptions) =>
