@@ -4,6 +4,7 @@ import { Term } from "./data/Term";
 import { List } from "immutable";
 import { IState } from "./data/State";
 import { Goal } from "./data/Goal";
+import { array } from "./array";
 
 export { Term } from "./data/Term";
 
@@ -42,7 +43,12 @@ export const kanren = ({ }: IBuildKanren): IKanren => {
         ({ goal, state = {} }: IRunOptions) =>
             take(call(goal, state));
 
-    const unification = buildUnification({});
+
+    const unification = buildUnification({
+        terms: [
+            ...array
+        ]
+    });
 
     return {
         callWithFresh: (f) => ({ substitution, count }) => f(Symbol.for(`${count}`))({ substitution, count: count + 1 }),

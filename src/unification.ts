@@ -15,15 +15,19 @@ const walk = (term: Term, substitution: Substitution): Term => {
     return pr ? walk(pr.right, substitution) : term;
 };
 
-interface IBuildUnification {
-
+interface TermPredicate {
+    (t1: Term, t2: Term): boolean;
 }
 
-interface IUnification {
+export interface IBuildUnification {
+    terms: Array<[TermPredicate, (unification: IUnification) => IUnification]>;
+}
+
+export interface IUnification {
     (t1: Term, t2: Term, substitution: Substitution | false): Substitution | false;
 }
 
-export const buildUnification = ({}: IBuildUnification): IUnification => {
+export const buildUnification = ({ terms }: IBuildUnification): IUnification => {
     const unification: IUnification = (t1, t2, substitution) => {
         if (substitution === false) return false;
 
@@ -33,12 +37,10 @@ export const buildUnification = ({}: IBuildUnification): IUnification => {
         if (t1 === t2) return substitution;
         else if (typeof t1 === "symbol") return substitution.unshift({ left: t1, right: t2 });
         else if (typeof t2 === "symbol") return substitution.unshift({ left: t2, right: t1 });
-        else if (Array.isArray(t1) && Array.isArray(t2) && t1.length === 0 && t2.length === 0) return substitution;
-        else if (Array.isArray(t1) && Array.isArray(t2)) return unification(
-            t1.slice(1, t1.length - 1),
-            t2.slice(1, t2.length - 1),
-            unification(t1[0], t2[0], substitution));
-        else return false;
+        else {
+            const [_ = undefined, unif = (() => (): false => false)] = terms.find(([pred]) => pred(t1, t2)) || [];
+            return unif(unification)(t1, t2, substitution);
+        }
     };
 
     return unification;
