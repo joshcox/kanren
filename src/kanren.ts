@@ -1,4 +1,4 @@
-import { unification } from "./unification";
+import { buildUnification } from "./unification";
 import { append, appendMap, take, takeAll, Stream } from "./data/Stream";
 import { Term } from "./data/Term";
 import { List } from "immutable";
@@ -12,7 +12,7 @@ interface IRunOptions {
     state?: Partial<IState>;
 }
 
-interface IKanrenOptions {
+interface IBuildKanren {
 
 }
 
@@ -34,13 +34,15 @@ interface IKanren {
  * runAll(unify(1, 1));
  * ```
  */
-export const kanren = ({ }: IKanrenOptions): IKanren => {
+export const kanren = ({ }: IBuildKanren): IKanren => {
 
     const call = (g: Goal, state: Partial<IState>) => g({ count: 0, substitution: List(), ...state });
 
     const runner = (take: ($: Stream<IState>) => List<IState>) =>
         ({ goal, state = {} }: IRunOptions) =>
             take(call(goal, state));
+
+    const unification = buildUnification({});
 
     return {
         callWithFresh: (f) => ({ substitution, count }) => f(Symbol.for(`${count}`))({ substitution, count: count + 1 }),
