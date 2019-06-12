@@ -25,12 +25,12 @@ import { unify, callWithFresh, disj, conj, runAll }  from "kanren";
 const { unify, callWithFresh, disj, conj, runAll } = require("kanren");
 ```
 
-Real quick aside - `kanren` operates over `Term`s. No other values are supported within `kanren`. Note also that `symbol` `Term`s are reserved for internal use within `kanren`; please don't use them.
+Real quick aside - `kanren` operates over `Term`s. No other values are supported within `kanren`. Note that `symbol` `Term`s are reserved for internal use within `kanren`; please don't use them.
 ```typescript
 type Term = boolean | undefined | null | number | string | symbol | Array<any>;
 ```
 
-Now that we have `kanren`, does `1` unify with `1`? Use `runAll` to find all possible solutions for a `Goal`.
+Anyway... Now that we have `kanren`, use `runAll` to determine if `1` unifies with `1`.
 
 ```typescript
 > runAll({ goal: unify(1, 1) }).size
@@ -45,7 +45,7 @@ Does `1` unify with `2`?
 0
 ```
 
-It sure doesn't. There are `0` states in which the `unify(1, 2)` goal succeeds. What about other data?
+It sure doesn't. There are `0` states in which the `unify(1, 2)` goal succeeds. What happens when we `unify` other `Term`s?
 
 ```typescript
 > runAll({ goal: unify([1], 1) }).size
@@ -62,7 +62,7 @@ It sure doesn't. There are `0` states in which the `unify(1, 2)` goal succeeds. 
 1
 ```
 
-So, in general, data with equivalent structures and values tend to unify. What about a wildcard?
+So, in general, `Term`s with equivalent structures and values tend to unify. What about wildcards?
 
 ```typescript
 > runAll({ goal: callWithFresh((joker) => unify(joker, 5)) }).size
@@ -71,21 +71,44 @@ So, in general, data with equivalent structures and values tend to unify. What a
 { left: Symbol(0), right: 5 }
 ```
 
-We've just created what's known as a fresh logic variable. Like normal variables in the javascript world, this can be used to represent any value. As you can see within the subsitution above, you can assign a logic variable by unifying it with another term. You can also assign logic variables to values within non-primitive terms, such as `Array`s.
+We've just created what's known as a logic variable. Like normal variables in the javascript world, this can be used to represent values. As you can see within the subsitution above, you can assign a logic variable by unifying it with another term. You can also assign logic variables to values within non-primitive terms, such as `Array`s.
 
 ```typescript
 > runAll({ goal: callWithFresh((a) => unify([a], [5])) }).get(0).substitution.get(0)
 { left: Symbol(0), right: 5 }
 ```
 
-Cool. `kanren` has the ability to tell us if two shapes have the same pattern and value(s) and allows us to associate something called logic variables to other terms. There aren't many interesting things we can do with one unification, however. Knowledge within a `kanren` run can be expanded using `conj` (conjunction a.k.a logical "and") and `disj` (disjunction a.k.a logical "or").
+You might want to make multiple calls to `unify`. Using `conj` (conjunction a.k.a logical "and") we can create an aggregate goal that encompasses two smaller goals. Both goals must succeed for the aggregate to succeed.
 
 ```typescript
-
+> runAll({ goal: conj(unify(1,1), unify(1,1)) }).size
+1
+> runAll({ goal: conj(unify(1,1), unify(1,2)) }).size
+0
+> runAll({ goal: conj(unify(1,2), unify(1,2)) }).size
+0
+> runAll({ goal: callWithFresh((a) => conj(unify(a,5), unify([a],[5]))) }).size
+1
+> runAll({ goal: callWithFresh((a) => conj(unify(a,5), unify(a,[]))) }).size
+0
 ```
 
+Like `conj`, you could also use `disj` (disjunction a.k.a logical "or") to create an aggregate goal that encompasses two smaller goals. Unlike `conj`, only one of `disj`'s sub-goal need succeed for the aggregate to succeed.
 
+```typescript
+> runAll({ goal: disj(unify(1,1), unify(1,1)) }).size
+2
+> runAll({ goal: disj(unify(1,1), unify(1,2)) }).size
+1
+> runAll({ goal: disj(unify(1,2), unify(1,2)) }).size
+0
+> runAll({ goal: callWithFresh((a) => disj(unify(a,5), unify(a,6))) }).size
+2
+> runAll({ goal: callWithFresh((a) => disj(unify(a,5), unify([a],[]))) }).size
+1
+```
 
+Note that `disj` has the power to create new states; it creates a branch. `conj` is used to compound new information to existing states.
 
 # Work in Progress
 * Benchmarking
