@@ -62,12 +62,18 @@ It sure doesn't. There are `0` states in which the `unify(1, 2)` goal succeeds. 
 1
 ```
 
-So, in general, `Term`s with equivalent structures and values tend to unify. What about wildcards?
+So, in general, `Term`s with equivalent structures and values tend to unify. What about wildcards? The `callWithFresh` goal wraps a goals and introduces a variable that can be used within the internal goal.
 
 ```typescript
-> runAll({ goal: callWithFresh((joker) => unify(joker, 5)) }).size
+> // Wrap a goal with a hole (`unify(_,5)`) with a function of one argument.
+> // Use the single parameter to fill in the hole
+> const goalWithVariable = (joker) => unify(joker, 5);
+> // Pass `goalWithVariable` to `callWithFresh` to create a goal that creates a logic variable
+> runAll({ goal: callWithFresh(goalWithVariable) }).size
 1
 > runAll({ goal: callWithFresh((joker) => unify(joker, 5)) }).get(0).substitution.get(0)
+{ left: Symbol(0), right: 5 }
+> runAll({ goal: callWithFresh((joker) => unify(5, joker)) }).get(0).substitution.get(0)
 { left: Symbol(0), right: 5 }
 ```
 
