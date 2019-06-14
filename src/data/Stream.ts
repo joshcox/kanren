@@ -1,8 +1,8 @@
 import { List } from "immutable";
 
 /**
- * A function that returns a list or another function that returns a list
- * or another function that...
+ * A function that returns either a list or a function that returns either a list
+ * or a function that...
  *
  * You get the idea
  */
@@ -19,7 +19,7 @@ export interface Streamer<A> {
 export type Stream<A> = List<A> | Streamer<A>;
 
 /**
- * Determine if a [[Stream]] needs function that needs to be pulled
+ * Determine if a [[Stream]] is a function that needs to be pulled
  */
 export const isLazy = <A>($: Stream<A>): $ is Streamer<A> => $ instanceof Function;
 
