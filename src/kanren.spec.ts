@@ -1,8 +1,10 @@
-import { unify, runAll, conj, disj, callWithFresh } from "./mk";
+import { kanren } from "./kanren";
 import { IState } from "./data/State";
 import { List } from "immutable";
 import { Goal } from "./data/Goal";
 import { Stream } from "./data/Stream";
+
+const { unify, runAll, conj, disj, callWithFresh } = kanren();
 
 const hasSolutions = (solutions: List<IState>): boolean => !solutions.isEmpty();
 
@@ -13,7 +15,7 @@ describe("mk", () => {
     describe("scope goals", () => {
         describe("callWithFresh", () => {
             it("injects a new logic variable into the provided goal", () => {
-                const f = runAll({ goal: callWithFresh((a) => unify(a, 5)) });
+                const f = runAll(callWithFresh((a) => unify(a, 5)) );
                 expect(hasSolutions(f)).toBeTruthy();
                 expect(f.size).toBe(1);
                 const solution1 = f.get(0);
@@ -24,8 +26,8 @@ describe("mk", () => {
             });
 
             it("does not affect the provided goal past injecting the logic variable", () => {
-                expect(hasSolutions(runAll({ goal: callWithFresh((a) => succeed) }))).toBeTruthy();
-                expect(hasSolutions(runAll({ goal: callWithFresh((a) => fail) }))).toBeFalsy();
+                expect(hasSolutions(runAll(callWithFresh((a) => succeed) ))).toBeTruthy();
+                expect(hasSolutions(runAll(callWithFresh((a) => fail) ))).toBeFalsy();
             });
         });
     });
@@ -33,32 +35,32 @@ describe("mk", () => {
     describe("aggregator goals", () => {
         describe("conj", () => {
             it("evaluates to the empty set when one, the other, or both goals do not succeed in the state", () => {
-                expect(hasSolutions(runAll({ goal: conj(succeed, fail) }))).toBeFalsy();
-                expect(hasSolutions(runAll({ goal: conj(fail, succeed) }))).toBeFalsy();
-                expect(hasSolutions(runAll({ goal: conj(fail, fail) }))).toBeFalsy();
+                expect(hasSolutions(runAll(conj(succeed, fail) ))).toBeFalsy();
+                expect(hasSolutions(runAll(conj(fail, succeed) ))).toBeFalsy();
+                expect(hasSolutions(runAll(conj(fail, fail) ))).toBeFalsy();
             });
 
             it("evaluates to a non-empty set when both goals succeed in the state", () => {
-                expect(hasSolutions(runAll({ goal: conj(succeed, succeed) }))).toBeTruthy();
+                expect(hasSolutions(runAll(conj(succeed, succeed) ))).toBeTruthy();
             });
         });
 
         describe("disj", () => {
             it("evaluated to a non-empty set when one, the other, or both goals succeed in the state", () => {
-                expect(hasSolutions(runAll({ goal: disj(succeed, fail) }))).toBeTruthy();
-                expect(hasSolutions(runAll({ goal: disj(succeed, succeed) }))).toBeTruthy();
-                expect(hasSolutions(runAll({ goal: disj(succeed, succeed) }))).toBeTruthy();
+                expect(hasSolutions(runAll(disj(succeed, fail) ))).toBeTruthy();
+                expect(hasSolutions(runAll(disj(succeed, succeed) ))).toBeTruthy();
+                expect(hasSolutions(runAll(disj(succeed, succeed) ))).toBeTruthy();
             });
 
             it("evaluates to the empty set when neither goal succeeds", () => {
-                expect(hasSolutions(runAll({ goal: disj(fail, fail) }))).toBeFalsy();
+                expect(hasSolutions(runAll(disj(fail, fail) ))).toBeFalsy();
             });
         });
     });
 
     describe("constraint goals", () => {
         describe("unify", () => {
-            const canUnify = (goal: Goal): boolean => hasSolutions(runAll({ goal }));
+            const canUnify = (goal: Goal): boolean => hasSolutions(runAll(goal));
 
             describe("symbols (logic variables)", () => {
                 it("can be unified with a symbol", () => {
