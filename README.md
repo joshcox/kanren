@@ -3,10 +3,10 @@
 
 # `kanren`
 - [`kanren`](#kanren)
-- [Introduction](#introduction)
-- [Getting Started](#getting-started)
-- [Work in Progress](#work-in-progress)
-- [Contributing](#contributing)
+- [Introduction](#Introduction)
+- [Getting Started](#Getting-Started)
+- [Work in Progress](#Work-in-Progress)
+- [Contributing](#Contributing)
 
 # Introduction
 Kanren is a port of [`microKanren`](https://github.com/jasonhemann/microKanren) to TypeScript. I'll defer to [miniKanren.org](http://minikanren.org/) for an explanation of what types of problems the `kanren` family of languages solve.
@@ -19,10 +19,12 @@ First things first, install `kanren`: `npm install --save kanren`
 Import `kanren`.
 ```typescript
 // es6
-import { unify, callWithFresh, disj, conj, runAll }  from "kanren";
+import { kanren }  from "kanren";
 
 // commonjs
-const { unify, callWithFresh, disj, conj, runAll } = require("kanren");
+const { kanren } = require("kanren");
+
+const { unify, callWithFresh, disj, conj, runAll } = kanren();
 ```
 
 Real quick aside - `kanren` operates over `Term`s. No other values are supported within `kanren`. Note that `symbol` `Term`s are reserved for internal use within `kanren`; please don't use them.
