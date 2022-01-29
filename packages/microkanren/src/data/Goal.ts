@@ -1,5 +1,5 @@
 import { IState } from "./State";
-import { Stream } from "./Stream";
+import { Stream } from "./stream";
 
 /**
  * A Goal is a function that takes in [[IConstraints]] and returns a [[Stream]]
