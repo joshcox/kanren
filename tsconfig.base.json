@@ -8,16 +8,19 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "importHelpers": true,
-    "target": "es2015",
+    "target": "es2021",
     "module": "esnext",
     "lib": [
       "es2017",
-      "dom"
+      "es2021"
     ],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@kanren/data": [
+        "packages/data/src/index.ts"
+      ],
       "@kanren/microkanren": [
         "packages/microkanren/src/index.ts"
       ]

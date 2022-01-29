@@ -1,5 +1,5 @@
-import { List } from "immutable";
-import { Term } from "./data/Term";
+import { cons, find, List } from "@kanren/data";
+import { Term } from "./term";
 
 export interface ISubstitution { left: symbol; right: Term }
 
@@ -11,7 +11,7 @@ type Substitution = List<ISubstitution>;
  * is the input (`term`).
  */
 const walk = (term: Term, substitution: Substitution): Term => {
-    const pr = typeof term === "symbol" && substitution.find(({ left }) => left === term);
+    const pr = typeof term === "symbol" && find(substitution, ({ left }) => left === term);
     return pr ? walk(pr.right, substitution) : term;
 };
 
@@ -25,8 +25,8 @@ export const unification = (t1: Term, t2: Term, substitution: Substitution | fal
     // strictly equal terms unify
     if (t1 === t2) return substitution;
     // symbols unify to any other term
-    else if (typeof t1 === "symbol") return substitution.unshift({ left: t1, right: t2 });
-    else if (typeof t2 === "symbol") return substitution.unshift({ left: t2, right: t1 });
+    else if (typeof t1 === "symbol") return cons({ left: t1, right: t2 }, substitution);
+    else if (typeof t2 === "symbol") return cons({ left: t2, right: t1 }, substitution);
     // empty arrays unify
     else if (Array.isArray(t1) && Array.isArray(t2) && t1.length === 0 && t2.length === 0) return substitution;
     // arrays unify every element in both arrays unify with a matching element in the other array

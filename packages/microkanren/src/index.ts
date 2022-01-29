@@ -1,11 +1,25 @@
-import { unification } from "./unification";
-import { append, appendMap, take, takeAll, Stream } from "./data/Stream";
-import { Term } from "./data/Term";
-import { List } from "immutable";
-import { IState } from "./data/State";
-import { Goal } from "./data/Goal";
+import { ISubstitution, unification } from "./unification";
+import { Term } from "./term";
+import * as list from "@kanren/data";
+import * as search from "./search.stream";
+import { List } from "@kanren/data";
 
-export { Term } from "./data/Term";
+export { Term } from "./term";
+
+/**
+ * A Goal is a function that takes in [[IConstraints]] and returns a [[Stream]]
+ * of [[IConstraints]] that represent success states
+ */
+ export type Goal = (constraints: IState) => search.Stream<IState>;
+
+ /**
+ * A set of constraints that represents a solution to a model.
+ */
+export interface IState {
+    substitution: List<ISubstitution>;
+    count: number;
+}
+
 
 interface IRunOptions {
     state?: Partial<IState>;
@@ -18,9 +32,9 @@ export const kanren = () => {
      * able to unify within. When the two terms do _not_ unify, this goal returns a mature empty [[Stream]].
      */
     const unify = (u: Term, v: Term): Goal =>
-        ({ substitution: substitutionStore, count }) => {
-            const newSubStore = unification(u, v, substitutionStore);
-            return newSubStore ? List([{ substitution: newSubStore, count }]) : List();
+        ({ substitution, count }) => {
+            const newSub = unification(u, v, substitution);
+            return search.unit.stream(newSub ? [{ substitution: newSub, count }] : []);
         };
 
     /**
@@ -36,35 +50,35 @@ export const kanren = () => {
      * successful in one, the other, or both [[Goal]]s.
      */
     const disj = (g1: Goal, g2: Goal): Goal =>
-        (state) => append(g1(state), g2(state));
+        (state) => search.plus(g1(state), g2(state));
 
     /**
      * Logical "and". This goal, when given two [[Goals]], aggregates states that are
      * successful in both [[Goal]]s.
      */
     const conj = (g1: Goal, g2: Goal): Goal =>
-        (state) => appendMap(g2, g1(state));
+        (state) => search.bind(g2, g1(state));
 
     /**
      * Call a [[Goal]] against an [[IState]]. Any properties within the [[IState]] that are omitted
      * will be given sane defaults.
      */
-    const call = (g: Goal, state: Partial<IState>) => g({ count: 0, substitution: List(), ...state });
+    const call = (g: Goal, state: Partial<IState>) => g({ count: 0, substitution: list.empty(), ...state });
 
-    const runner = (take: ($: Stream<IState>) => List<IState>) =>
+    const runner = (isDonePredicate: ($: IState[]) => boolean) =>
         (goal: Goal, { state = {} }: IRunOptions = {}) =>
-            take(call(goal, state))
+            search.takeUntil(call(goal, state), isDonePredicate);
 
     /**
      * Runs a [[Goal]], returning a maximum of `numberOfSolutions` successful states
      */
     const run = (goal: Goal, { numberOfSolutions, ...options }: IRunOptions & { numberOfSolutions: number }) =>
-        runner(take(numberOfSolutions))(goal, options);
+        runner((results) => results.length >= numberOfSolutions)(goal, options);
 
     /**
      * Runs a [[Goal]], returning all successful states
      */
-    const runAll = runner(takeAll);
+    const runAll = runner(() => false);
 
     return {
         unify,

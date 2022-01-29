@@ -3,13 +3,9 @@
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
     "module": "commonjs",
-    "types": [
-      "jest",
-      "node"
-    ]
+    "types": ["jest", "node"]
   },
   "include": [
-    "**/*.ts",
     "**/*.test.ts",
     "**/*.spec.ts",
     "**/*.d.ts"
