@@ -1,4 +1,4 @@
-import { kanren } from "./kanren";
+import { kanren } from ".";
 import { IState } from "./data/State";
 import { List } from "immutable";
 import { Goal } from "./data/Goal";
@@ -19,10 +19,13 @@ describe("mk", () => {
                 expect(hasSolutions(f)).toBeTruthy();
                 expect(f.size).toBe(1);
                 const solution1 = f.get(0);
-                expect(solution1.count).toBe(1);
-                expect(solution1.substitution.size).toBe(1);
-                const state1 = solution1.substitution.get(0);
-                expect(state1).toEqual({ left: Symbol.for(`${solution1.count - 1}`), right: 5 });
+                expect(solution1).toBeDefined();
+                if (solution1) {
+                    expect(solution1.count).toBe(1);
+                    expect(solution1.substitution.size).toBe(1);
+                    const state1 = solution1.substitution.get(0);
+                    expect(state1).toEqual({ left: Symbol.for(`${solution1.count - 1}`), right: 5 });
+                }
             });
 
             it("does not affect the provided goal past injecting the logic variable", () => {

@@ -37,8 +37,8 @@ export const append = <A>($1: Stream<A>, $2: Stream<A>): Stream<A> => {
 
     const newList = append($1.shift(), $2);
     return (isLazy(newList))
-        ? () => append(List([$1.get(0)]), newList)
-        : newList.unshift($1.get(0));
+        ? () => append<A>(List<A>([$1.get(0) as A]), newList)
+        : newList.unshift($1.get(0) as A);
 };
 
 /**
@@ -48,7 +48,7 @@ export const append = <A>($1: Stream<A>, $2: Stream<A>): Stream<A> => {
 export const appendMap = <A>(g: (a: A) => Stream<A>, $: Stream<A>): Stream<A> => {
     if (isLazy($)) return () => appendMap(g, $());
     if (List.isList($) && $.isEmpty()) return $;
-    return append(appendMap(g, $.shift()), g($.get(0)));
+    return append(appendMap(g, $.shift()), g($.get(0) as A));
 };
 
 /**
@@ -73,12 +73,14 @@ export const takeUntil = <A>(fn: (results: List<A>, result: IteratorResult<A>) =
     ($: Stream<A>): List<A> => {
         const pull = puller($);
         let cont = true;
-        let results = List();
+        let results = List<A>();
         let result = pull.next();
         while (cont && !result.done) {
-            results = results.push(result.value);
-            result = pull.next();
-            cont = fn(results, result);
+            if (result.value) {
+                results = results.push(result.value);
+                result = pull.next();
+                cont = fn(results, result as IteratorYieldResult<A>);
+            }
         }
         return results;
     }

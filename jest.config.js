@@ -1,6 +1,5 @@
+const { getJestProjects } = require('@nrwl/jest');
+
 module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  collectCoverage: true,
-  testPathIgnorePatterns: ["/lib/"]
+projects: getJestProjects()
 };

@@ -1,0 +1,43 @@
+{
+  "root": "packages/microkanren",
+  "sourceRoot": "packages/microkanren/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/microkanren",
+        "main": "packages/microkanren/src/index.ts",
+        "tsConfig": "packages/microkanren/tsconfig.lib.json",
+        "assets": [
+          "packages/microkanren/*.md"
+        ]
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "packages/microkanren/**/*.ts"
+        ]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": [
+        "coverage/packages/microkanren"
+      ],
+      "options": {
+        "jestConfig": "packages/microkanren/jest.config.js",
+        "passWithNoTests": true
+      }
+    }
+  },
+  "tags": []
+}
