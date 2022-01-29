@@ -1,94 +1,131 @@
+[![build status](https://api.travis-ci.org/joshcox/kanren.png?branch=master)](http://travis-ci.org/joshcox/kanren)
+[![npm version](https://badge.fury.io/js/kanren.svg)](https://badge.fury.io/js/kanren)
 
+# `kanren`
+- [`kanren`](#kanren)
+- [Introduction](#introduction)
+- [Getting Started](#getting-started)
+- [Work in Progress](#work-in-progress)
+- [Contributing](#contributing)
 
-# Kanren
+# Introduction
+Kanren is a port of [`microKanren`](https://github.com/jasonhemann/microKanren) to TypeScript. I'll defer to [miniKanren.org](http://minikanren.org/) for an explanation of what types of problems the `kanren` family of languages solve.
 
-This project was generated using [Nx](https://nx.dev).
+The initial goal with this particular port is to provide an API that can easily be extended to include additional term types and constraints.
 
-<p style="text-align: center;"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="450"></p>
+# Getting Started
+First things first, install `kanren`: `npm install --save kanren`
 
-🔎 **Smart, Fast and Extensible Build System**
+Import `kanren`.
+```typescript
+// es6
+import { kanren }  from "kanren";
 
-## Adding capabilities to your workspace
+// commonjs
+const { kanren } = require("kanren");
 
-Nx supports many plugins which add capabilities for developing different types of applications and different tools.
+const { unify, callWithFresh, disj, conj, runAll } = kanren();
+```
 
-These capabilities include generating applications, libraries, etc as well as the devtools to test, and build projects as well.
+Real quick aside - `kanren` operates over `Term`s. No other values are supported within `kanren`. Note that `symbol` `Term`s are reserved for internal use within `kanren`; please don't use them.
+```typescript
+type Term = boolean | undefined | null | number | string | symbol | Array<any>;
+```
 
-Below are our core plugins:
+Anyway... Now that we have `kanren`, use `runAll` to determine if `1` unifies with `1`.
 
-- [React](https://reactjs.org)
-  - `npm install --save-dev @nrwl/react`
-- Web (no framework frontends)
-  - `npm install --save-dev @nrwl/web`
-- [Angular](https://angular.io)
-  - `npm install --save-dev @nrwl/angular`
-- [Nest](https://nestjs.com)
-  - `npm install --save-dev @nrwl/nest`
-- [Express](https://expressjs.com)
-  - `npm install --save-dev @nrwl/express`
-- [Node](https://nodejs.org)
-  - `npm install --save-dev @nrwl/node`
+```typescript
+> runAll( unify(1, 1) ).size
+1
+```
 
-There are also many [community plugins](https://nx.dev/community) you could add.
+As you can see, there's one state in which the `unify(1, 1)` goal succeeds. So yes, `1` unifies with `1`.
+Does `1` unify with `2`?
 
-## Generate an application
+```typescript
+> runAll( unify(1, 2) ).size
+0
+```
 
-Run `nx g @nrwl/react:app my-app` to generate an application.
+It sure doesn't. There are `0` states in which the `unify(1, 2)` goal succeeds. What happens when we `unify` other `Term`s?
 
-> You can use any of the plugins above to generate applications as well.
+```typescript
+> runAll( unify([1], 1) ).size
+0
+> runAll( unify([1], [1]) ).size
+1
+> runAll( unify([1], [1,2]) ).size
+0
+> runAll( unify(true, true) ).size
+1
+> runAll( unify(true, false) ).size
+0
+> runAll( unify(false, false) ).size
+1
+```
 
-When using Nx, you can create multiple applications and libraries in the same workspace.
+So, in general, `Term`s with equivalent structures and values tend to unify. What about wildcards? The `callWithFresh` goal wraps a goals and introduces a variable that can be used within the internal goal.
 
-## Generate a library
+```typescript
+> // Wrap a goal with a hole (`unify(_,5)`) with a function of one argument.
+> // Use the single parameter to fill in the hole
+> const goalWithVariable = (joker) => unify(joker, 5);
+> // Pass `goalWithVariable` to `callWithFresh` to create a goal that creates a logic variable
+> runAll( callWithFresh(goalWithVariable) ).size
+1
+> runAll( callWithFresh((joker) => unify(joker, 5)) ).get(0).substitution.get(0)
+{ left: Symbol(0), right: 5 }
+> runAll( callWithFresh((joker) => unify(5, joker)) ).get(0).substitution.get(0)
+{ left: Symbol(0), right: 5 }
+```
 
-Run `nx g @nrwl/react:lib my-lib` to generate a library.
+We've just created what's known as a logic variable. Like normal variables in the javascript world, this can be used to represent values. As you can see within the subsitution above, you can assign a logic variable by unifying it with another term. You can also assign logic variables to values within non-primitive terms, such as `Array`s.
 
-> You can also use any of the plugins above to generate libraries as well.
+```typescript
+> runAll( callWithFresh((a) => unify([a], [5])) ).get(0).substitution.get(0)
+{ left: Symbol(0), right: 5 }
+```
 
-Libraries are shareable across libraries and applications. They can be imported from `@kanren/mylib`.
+You might want to make multiple calls to `unify`. Using `conj` (conjunction a.k.a logical "and") we can create an aggregate goal that encompasses two smaller goals. Both goals must succeed for the aggregate to succeed.
 
-## Development server
+```typescript
+> runAll( conj(unify(1,1), unify(1,1)) ).size
+1
+> runAll( conj(unify(1,1), unify(1,2)) ).size
+0
+> runAll( conj(unify(1,2), unify(1,2)) ).size
+0
+> runAll( callWithFresh((a) => conj(unify(a,5), unify([a],[5]))) ).size
+1
+> runAll( callWithFresh((a) => conj(unify(a,5), unify(a,[]))) ).size
+0
+```
 
-Run `nx serve my-app` for a dev server. Navigate to http://localhost:4200/. The app will automatically reload if you change any of the source files.
+Like `conj`, you could also use `disj` (disjunction a.k.a logical "or") to create an aggregate goal that encompasses two smaller goals. Unlike `conj`, only one of `disj`'s sub-goal need succeed for the aggregate to succeed.
 
-## Code scaffolding
+```typescript
+> runAll( disj(unify(1,1), unify(1,1)) ).size
+2
+> runAll( disj(unify(1,1), unify(1,2)) ).size
+1
+> runAll( disj(unify(1,2), unify(1,2)) ).size
+0
+> runAll( callWithFresh((a) => disj(unify(a,5), unify(a,6))) ).size
+2
+> runAll( callWithFresh((a) => disj(unify(a,5), unify([a],[]))) ).size
+1
+```
 
-Run `nx g @nrwl/react:component my-component --project=my-app` to generate a new component.
+Note that `disj` has the power to create new states; it creates a branch. `conj` is used to compound new information to existing states.
 
-## Build
+# Work in Progress
+* Benchmarking
+* Constraint Extensions - Extend `kanren` with custom constraints
+* Term type Extensions - Extend `kanren` with custom term types
+  * [ ] Hook new terms into `unification` algorithm via a predicate and a unifier
+* Standard Libraries
+  * [ ] `Array`
+  * [ ] `Object`
 
-Run `nx build my-app` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
-
-## Running unit tests
-
-Run `nx test my-app` to execute the unit tests via [Jest](https://jestjs.io).
-
-Run `nx affected:test` to execute the unit tests affected by a change.
-
-## Running end-to-end tests
-
-Run `ng e2e my-app` to execute the end-to-end tests via [Cypress](https://www.cypress.io).
-
-Run `nx affected:e2e` to execute the end-to-end tests affected by a change.
-
-## Understand your workspace
-
-Run `nx graph` to see a diagram of the dependencies of your projects.
-
-## Further help
-
-Visit the [Nx Documentation](https://nx.dev) to learn more.
-
-
-
-## ☁ Nx Cloud
-
-### Distributed Computation Caching & Distributed Task Execution
-
-<p style="text-align: center;"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-cloud-card.png"></p>
-
-Nx Cloud pairs with Nx in order to enable you to build and test code more rapidly, by up to 10 times. Even teams that are new to Nx can connect to Nx Cloud and start saving time instantly.
-
-Teams using Nx gain the advantage of building full-stack applications with their preferred framework alongside Nx’s advanced code generation and project dependency graph, plus a unified experience for both frontend and backend developers.
-
-Visit [Nx Cloud](https://nx.app/) to learn more.
+# Contributing
+`kanren` is welcoming contributions. If you have something to say, I'd like to hear it. If you have something to code, I'd like to see it. Read more about how to contribute and how to get set up with development [here](./.github/CONTRIBUTING.md).
