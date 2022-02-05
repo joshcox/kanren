@@ -1,32 +1,39 @@
-import { cons, empty, isCons, isEmpty, isList, List, ListKinds, ListTypes } from "./list";
+import { Base } from "./base";
+import { cons, empty, isCons, isEmpty, isList, List } from "./list";
+import { NilKinds } from "./nil";
+import { PairKinds } from "./pair";
 
-enum StreamOnlyTypes {
+export enum StreamKinds {
     Abort = 'abort',
-    Future = 'future'
+    Future = 'future',
+    Lazy = 'lazy'
 }
-export type StreamTypes<A, K extends string = never> = ListTypes<A, K> | Stream<A>;
 
-export type StreamKinds = StreamOnlyTypes | ListKinds;
+export type Strem<A, K extends string = never> =
+    List<A, StreamKinds | K> |
+    AbortStream<A> |
+    FutureStream<A> |
+    Lazy<A, StreamKinds | K>;
 
-export class Stream<A> extends List<A, StreamOnlyTypes> {
-    constructor(kind: ListKinds | StreamOnlyTypes) {
+export class Stream<A, K extends string = never> extends Base<StreamKinds | K> {
+    constructor(kind: StreamKinds | K) {
         super(kind);
     }
 }
-export const isStream = <A>($: StreamTypes<A>): $ is Stream<A> =>
+export const isStream = <A>($: unknown): $ is Strem<A> =>
     isList($) || $ instanceof Stream;
-export const stream = <A>(items: A[]): Stream<A> =>
-    items.reduce(($: Stream<A>, item) => cons(item, $), empty<A>());
+export const stream = <A, K extends string = never>(items: A[]): Strem<A, K> =>
+    items.reduce(($: Strem<A, K>, item) => cons<A, Strem<A, K>>(item, $), empty<K>());
 
 /**
  * Signal a stoppage to whatever stream-processor exists.
  */
 class AbortStream<A> extends Stream<A> {
     constructor(readonly error: Error) {
-        super(StreamOnlyTypes.Abort);
+        super(StreamKinds.Abort);
     }
 }
-export const isAbort = <A>($: Stream<A>): $ is AbortStream<A> => $ instanceof AbortStream;
+export const isAbort = <A>($: Strem<A>): $ is AbortStream<A> => $ instanceof AbortStream;
 export const abort = <A>(error: Error) => new AbortStream<A>(error);
 
 /**
@@ -35,14 +42,14 @@ export const abort = <A>(error: Error) => new AbortStream<A>(error);
  * To resolve the async stream is to _see_ it.
  */
 class FutureStream<A> extends Stream<A> {
-    constructor(readonly promise: Promise<Stream<A>>) {
-        super(StreamOnlyTypes.Future);
+    constructor(readonly promise: Promise<Strem<A>>) {
+        super(StreamKinds.Future);
     }
 }
-export const isFuture = <A>($: Stream<A>): $ is FutureStream<A> => $ instanceof FutureStream;
-export const future = <A>(future$: Promise<Stream<A>>) => new FutureStream(future$);
-export const see = <A>($: FutureStream<A>): Promise<Stream<A>> => $.promise;
-export const mapFuture = <A>(future$: FutureStream<A>, fn: ($: Stream<A>) => Stream<A>): FutureStream<A> =>
+export const isFuture = <A>($: Strem<A>): $ is FutureStream<A> => $ instanceof FutureStream;
+export const future = <A>(future$: Promise<Strem<A>>) => new FutureStream(future$);
+export const see = <A>($: FutureStream<A>): Promise<Strem<A>> => $.promise;
+export const mapFuture = <A>(future$: FutureStream<A>, fn: ($: Strem<A>) => Strem<A>): FutureStream<A> =>
     future(see(future$).then(fn).catch<AbortStream<A>>(abort))
 
 /**
@@ -50,19 +57,19 @@ export const mapFuture = <A>(future$: FutureStream<A>, fn: ($: Stream<A>) => Str
  * The stream can be calculated at the discretion of the consumer by running the function.
  * To calculate the delayed stream is to _force_ it.
  */
-class Lazy<A, $ extends Stream<A>> extends Stream<A> {
-    constructor(readonly force: () => $) {
-        super(StreamOnlyTypes.Future);
+class Lazy<A, K extends string = never> extends Stream<A> {
+    constructor(readonly force: () => Strem<A, K>) {
+        super(StreamKinds.Lazy);
     }
 }
-export const isLazy = <A, S extends Stream<A>>($: Stream<A>): $ is Lazy<A, S> => $ instanceof Lazy;
-export const lazy = <A, S extends Stream<A>>(delay: () => S) => new Lazy<A, S>(delay);
-export const force = <A, S extends Stream<A>>(delay: Lazy<A, S>): Stream<A> => delay.force();
+export const isLazy = <A, K extends string = never>($: Strem<A, K>): $ is Lazy<A, K> => $ instanceof Lazy;
+export const lazy = <A, K extends string = never>(delay: () => Strem<A, K>) => new Lazy<A, K>(delay);
+export const force = <A, K extends string = never>(delay: Lazy<A, K>): Strem<A, K> => delay.force();
 
-function* iterate<A>($: Stream<A>): Generator<Promise<Stream<A>> | A, Error | null, Stream<A> | undefined> {
+function* iterate<A>($: Strem<A>): Generator<Promise<Strem<A>> | A, Error | null, Strem<A> | undefined> {
     if (isStream($)) {
         while (!(isEmpty($) || isAbort($))) {
-            if (isCons<A, Stream<A>, StreamKinds>($)) {
+            if (isCons<A, Strem<A>>($)) {
                 yield $.car;
                 $ = $.cdr;
             } else if (isLazy($)) {
@@ -85,10 +92,10 @@ function* iterate<A>($: Stream<A>): Generator<Promise<Stream<A>> | A, Error | nu
     else throw new Error('stream#iterate: input stream is not a stream');
 }
 
-export const take = async <A>($: Stream<A>, predicate: (results: A[]) => boolean = () => false): Promise<A[]> => {
+export const take = async <A>($: Strem<A>, predicate: (results: A[]) => boolean = () => false): Promise<A[]> => {
     const iterator = iterate($);
 
-    const takeInner = async (results: A[], $?: Stream<A>): Promise<A[]> => {
+    const takeInner = async (results: A[], $?: Strem<A>): Promise<A[]> => {
         if (predicate(results)) return results;
         const result = iterator.next($);
         if (result.value instanceof Error) throw result.value;

@@ -1,16 +1,17 @@
 import { kanren } from ".";
 import { IState } from "./data/State";
 import { Goal } from "./data/Goal";
-import { empty, stream, Stream } from "./data/stream";
+import { empty, stream, Stream, StreamKinds, Strem } from "./data/stream";
 import { car, length } from "./data/list";
+import { PairKinds } from "./data/pair";
 
 const { unify, runAll, conj, disj, callWithFresh } = kanren();
 
 const hasSolutions = (solutions: IState[]): boolean => solutions.length > 0;
 
 describe("mk", () => {
-    const succeed = (state: IState): Stream<IState> => stream([state]);
-    const fail = (_: IState): Stream<IState> => empty();
+    const succeed = (state: IState): Strem<IState> => stream([state]);
+    const fail = (_: IState): Strem<IState> => empty();
 
     describe("scope goals", () => {
         describe("callWithFresh", () => {

@@ -49,7 +49,7 @@ export const kanren = () => {
      * Call a [[Goal]] against an [[IState]]. Any properties within the [[IState]] that are omitted
      * will be given sane defaults.
      */
-    const call = (g: Goal, state: Partial<IState>) => g({ count: 0, substitution: list.empty<IState>(), ...state });
+    const call = (g: Goal, state: Partial<IState>) => g({ count: 0, substitution: list.empty(), ...state });
 
     const runner = (isDonePredicate: ($: IState[]) => boolean) =>
         (goal: Goal, { state = {} }: IRunOptions = {}) =>
