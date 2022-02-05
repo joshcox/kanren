@@ -1,5 +1,5 @@
 import { cons, find, List } from "@kanren/data";
-import { Term } from "./data/term";
+import { Term } from "./term";
 
 export interface ISubstitution { left: symbol; right: Term }
 

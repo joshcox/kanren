@@ -1,11 +1,25 @@
-import { unification } from "./unification";
-import { Term } from "./data/term";
+import { ISubstitution, unification } from "./unification";
+import { Term } from "./term";
 import * as list from "@kanren/data";
-import { IState } from "./data/State";
-import { Goal } from "./data/Goal";
-import * as search from "./search";
+import * as search from "./search.stream";
+import { List } from "@kanren/data";
 
-export { Term } from "./data/term";
+export { Term } from "./term";
+
+/**
+ * A Goal is a function that takes in [[IConstraints]] and returns a [[Stream]]
+ * of [[IConstraints]] that represent success states
+ */
+ export type Goal = (constraints: IState) => search.Stream<IState>;
+
+ /**
+ * A set of constraints that represents a solution to a model.
+ */
+export interface IState {
+    substitution: List<ISubstitution>;
+    count: number;
+}
+
 
 interface IRunOptions {
     state?: Partial<IState>;
