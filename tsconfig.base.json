@@ -12,13 +12,15 @@
     "module": "esnext",
     "lib": [
       "es2017",
-      "es2021",
-      "dom"
+      "es2021"
     ],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
+      "@kanren/data": [
+        "packages/data/src/index.ts"
+      ],
       "@kanren/microkanren": [
         "packages/microkanren/src/index.ts"
       ]

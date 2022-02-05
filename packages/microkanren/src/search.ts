@@ -1,8 +1,6 @@
-import { NilKinds, NilTypes } from "./data/nil";
-import { PairKinds } from "./data/pair";
-import { cons, force, future, isAbort, isCons, isEmpty, isFuture, isLazy, isStream, lazy, mapFuture, stream, Stream, StreamKinds, Strem } from "./data/stream";
+import { cons, force, isAbort, isCons, isEmpty, isFuture, isLazy, isStream, mapFuture, stream, Strem } from "@kanren/data";
 
-export { take as takeUntil } from './data/stream';
+export { take as takeUntil } from '@kanren/data';
 
 export const unit = {
     stream: <A>(items: A[]): Strem<A> => stream(items)

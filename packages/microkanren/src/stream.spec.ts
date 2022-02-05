@@ -1,5 +1,4 @@
-import { cons } from "./data/pair";
-import { future, lazy, Stream, Strem, take } from "./data/stream";
+import { future, lazy, cons, Strem, take } from "@kanren/data";
 
 describe('stream', () => {
     describe('lazy', () => {

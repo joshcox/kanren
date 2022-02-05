@@ -1,6 +1,6 @@
 import { unification } from "./unification";
 import { Term } from "./data/term";
-import * as list from "./data/list";
+import * as list from "@kanren/data";
 import { IState } from "./data/State";
 import { Goal } from "./data/Goal";
 import * as search from "./search";

@@ -1,9 +1,7 @@
-import { kanren } from ".";
+import { kanren } from "./index";
 import { IState } from "./data/State";
 import { Goal } from "./data/Goal";
-import { empty, stream, Stream, StreamKinds, Strem } from "./data/stream";
-import { car, length } from "./data/list";
-import { PairKinds } from "./data/pair";
+import { empty, stream, car, length, Strem } from "@kanren/data";
 
 const { unify, runAll, conj, disj, callWithFresh } = kanren();
 
