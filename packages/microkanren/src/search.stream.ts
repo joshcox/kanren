@@ -1,3 +1,4 @@
+import { isCons } from "@kanren/data";
 import { Readable } from "stream";
 
 class Empty<A> extends Readable {
@@ -24,17 +25,15 @@ class Cons<A> extends Readable {
     }
 
     private pull() {
+        while (isImmature(this.$)) this.$ = this.$.read();
         if (this.$ instanceof Empty) this.destroy();
-        else if (isImmature(this.$))
-            while (isImmature(this.$)) {
-                this.$ = this.$.read();
-            }
-        else {
+        else if (isMature(this.$)) {
             const next = this.$.read();
             if (next === null) this.destroy();
             else if (isImmature(next)) this.pull();
             else this.push(next);
         }
+        else throw new Error('Cons#pull: received unexpected stream');
     }
 }
 
@@ -75,6 +74,8 @@ const isImmature = <A>($: unknown): $ is ImmatureStream<A> =>
     isLazy($) || isFuture($);
 
 type MatureStream<A> = Cons<A> | Empty<A>;
+const isMature = <A>($: unknown): $ is MatureStream<A> =>
+    $ instanceof Empty || $ instanceof Cons;
 
 export type Stream<A> = MatureStream<A> | ImmatureStream<A>;
 
