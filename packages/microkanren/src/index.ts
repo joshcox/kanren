@@ -1,7 +1,7 @@
 import { buildUnification } from "./unification";
 import { Term } from "./term";
 import { SubstitutionAPI } from "./substitution/interface";
-import { Stream, StreamAPI } from "./stream/interface";
+import { StreamAPI } from "./stream/interface";
 import { Store, StoreAPI } from "./store/interface";
 
 export { Term } from "./term";
@@ -10,15 +10,15 @@ export { Term } from "./term";
  * A Goal is a function that takes in [[IConstraints]] and returns a [[Stream]]
  * of [[IConstraints]] that represent success states
  */
-export type Goal<S, C extends Store<S>, $ extends Stream<C>> = (store: C) => $;
+export type Goal<S, C extends Store<S>, $> = (store: C) => $;
 
-export type KanrenConfig<S, C extends Store<S>, $ extends Stream<C>> = {
+export type KanrenConfig<S, C extends Store<S>, $> = {
     substitutionAPI: SubstitutionAPI<S>;
     storeAPI: StoreAPI<S, C>;
     streamAPI: StreamAPI<C, $>;
 };
 
-export type Kanren<S, C extends Store<S>, $ extends Stream<C>> = {
+export type Kanren<S, C extends Store<S>, $> = {
     unify(u: Term, v: Term): Goal<S, C, $>;
     callWithFresh(f: (a: symbol) => Goal<S, C, $>): Goal<S, C, $>;
     disj(g1: Goal<S, C, $>, g2: Goal<S, C, $>): Goal<S, C, $>;
@@ -33,7 +33,7 @@ export type Kanren<S, C extends Store<S>, $ extends Stream<C>> = {
     }
 };
 
-export const kanren = <S, C extends Store<S>, $ extends Stream<C>>({
+export const kanren = <S, C extends Store<S>, $>({
     substitutionAPI,
     storeAPI,
     streamAPI,
@@ -48,10 +48,7 @@ export const kanren = <S, C extends Store<S>, $ extends Stream<C>>({
      */
     const unify = (u: Term, v: Term): G =>
         (store) => streamAPI.unit(
-            storeAPI.step(
-                unification(u, v, store.substitution),
-                store
-            )
+            storeAPI.step(unification(u, v, store.substitution), store)
         );
 
     /**
@@ -59,8 +56,7 @@ export const kanren = <S, C extends Store<S>, $ extends Stream<C>>({
      * to a function that, when given a `symbol`, returns a `Goal`.
      */
     const callWithFresh = (f: (a: symbol) => G): G =>
-        (store) =>
-            f(Symbol.for(`${store.count}`))(storeAPI.bump(store));
+        (store) => f(Symbol.for(`${store.count}`))(storeAPI.bump(store));
 
     /**
      * Logical "or". This goal, when given two [[Goals]], aggregates states that are

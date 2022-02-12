@@ -2,12 +2,12 @@ import { Goal, Kanren } from "../index";
 import { Store } from "../store/interface";
 import { Stream } from "../stream/search.stream";
 
-type PreludeConfig<S, C extends Store<S>, $ extends Stream<C>> = {
+type PreludeConfig<S, C extends Store<S>, $> = {
     kanren: Kanren<S, C, $>;
     name: string;
 }
 
-export const prelude = <S, C extends Store<S>, $ extends Stream<C>>({ kanren, name }: PreludeConfig<S, C, $>) => {
+export const prelude = <S, C extends Store<S>, $>({ kanren, name }: PreludeConfig<S, C, $>) => {
     const { unify, runAll, conj, disj, callWithFresh, api } = kanren;
     const hasSolutions = (solutions: Store<S>[]): boolean => solutions.length > 0;
 

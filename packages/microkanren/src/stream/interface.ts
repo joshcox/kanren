@@ -4,7 +4,7 @@ export interface Stream<A> extends Readable {
     read(): A;
 }
 
-export interface StreamAPI<A, $ extends Stream<A>> {
+export interface StreamAPI<A, $> {
     unit(state?: A): $;
     plus(stream1: $, stream2: $): $;
     bind(fn: (store: A) => $, stream: $): $;

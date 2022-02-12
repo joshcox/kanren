@@ -5,6 +5,7 @@ import SubstitutionMapAPI, { SubstitutionMap } from "./substitution/substitution
 import { StreamReadableAPI } from "./stream/search.stream";
 import { ConstraintStore } from "./store/store";
 import { Store } from "./store/interface";
+import { StreamListAPI } from "./stream/search";
 
 
 prelude({
@@ -22,5 +23,14 @@ prelude({
         substitutionAPI: SubstitutionMapAPI,
         storeAPI: ConstraintStore<SubstitutionMap>(),
         streamAPI: StreamReadableAPI<Store<SubstitutionMap>>(),
+    })
+});
+
+prelude({
+    name: 'Micro Kanren with list-stream implementation ',
+    kanren: kanren({
+        substitutionAPI: SubstitutionListAPI,
+        storeAPI: ConstraintStore<SubstitutionList>(),
+        streamAPI: StreamListAPI<Store<SubstitutionList>>(),
     })
 });
