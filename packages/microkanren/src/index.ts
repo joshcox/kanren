@@ -5,9 +5,16 @@ import { SubstitutionAPI } from "./substitution/interface";
 
 export { Term } from "./term";
 
+/**
+ * A set of constraints that represents a solution to a model.
+ */
 export type State<S> = { substitution: S, count: number };
 
-export type Goal<State, S> = (constraints: State) => search.Stream<S>;
+/**
+ * A Goal is a function that takes in [[IConstraints]] and returns a [[Stream]]
+ * of [[IConstraints]] that represent success states
+ */
+export type Goal<S> = (constraints: State<S>) => search.Stream<S>;
 
 export type KanrenConfig<S> = {
     substitutionAPI: SubstitutionAPI<S>;
@@ -17,26 +24,24 @@ type RunnerConfig<State> = { state?: Partial<State> };
 type RunConfig<State> = RunnerConfig<State> & { numberOfSolutions: number };
 
 export type Kanren<S> = {
-    unify(u: Term, v: Term): Goal<State<S>, S>;
-    callWithFresh(f: (a: symbol) => Goal<State<S>, S>): Goal<State<S>, S>;
-    disj(g1: Goal<State<S>, S>, g2: Goal<State<S>, S>): Goal<State<S>, S>;
-    conj(g1: Goal<State<S>, S>, g2: Goal<State<S>, S>): Goal<State<S>, S>;
-    call(g: Goal<State<S>, S>, state: State<S>): search.Stream<State<S>>;
-    run(goal: Goal<State<S>, S>, config: RunConfig<State<S>>): Promise<State<S>[]>;
-    runAll(goal: Goal<State<S>, S>, config?: RunnerConfig<State<S>>): Promise<State<S>[]>
+    unify(u: Term, v: Term): Goal<S>;
+    callWithFresh(f: (a: symbol) => Goal<S>): Goal<S>;
+    disj(g1: Goal<S>, g2: Goal<S>): Goal<S>;
+    conj(g1: Goal<S>, g2: Goal<S>): Goal<S>;
+    call(g: Goal<S>, state: State<S>): search.Stream<State<S>>;
+    run(goal: Goal<S>, config: RunConfig<State<S>>): Promise<State<S>[]>;
+    runAll(goal: Goal<S>, config?: RunnerConfig<State<S>>): Promise<State<S>[]>;
+    api: {
+        substitution: SubstitutionAPI<S>;
+    }
 };
 
-export const kanren = <S>({ substitutionAPI }: KanrenConfig<S>): Kanren<S> => {
-    /**
-    * A set of constraints that represents a solution to a model.
-    */
-    type IState = State<S>;
+export const kanren = <Subst>({ substitutionAPI }: KanrenConfig<Subst>): Kanren<Subst> => {
+    
+    type IState = State<Subst>;
 
-    /**
-     * A Goal is a function that takes in [[IConstraints]] and returns a [[Stream]]
-     * of [[IConstraints]] that represent success states
-     */
-    type IGoal = Goal<IState, S>;
+
+    type IGoal = Goal<Subst>;
 
     const unification = buildUnification(substitutionAPI);
 
@@ -103,6 +108,9 @@ export const kanren = <S>({ substitutionAPI }: KanrenConfig<S>): Kanren<S> => {
         call,
         callWithFresh,
         run,
-        runAll
+        runAll,
+        api: {
+            substitution: substitutionAPI
+        }
     }
 };

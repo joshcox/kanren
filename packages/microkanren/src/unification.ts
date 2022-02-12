@@ -13,7 +13,7 @@ export const buildUnification = <S>({ walk, add }: SubstitutionAPI<S>) => {
         if (t1 === t2) return substitution;
         // symbols unify to any other term
         else if (typeof t1 === "symbol") return add(t1, t2, substitution);
-        else if (typeof t2 === "symbol") return add(t2, t2, substitution);
+        else if (typeof t2 === "symbol") return add(t2, t1, substitution);
         // empty arrays unify
         else if (Array.isArray(t1) && Array.isArray(t2) && t1.length === 0 && t2.length === 0) return substitution;
         // arrays unify every element in both arrays unify with a matching element in the other array
