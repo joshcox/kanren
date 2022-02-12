@@ -2,7 +2,7 @@ import { buildUnification } from "./unification";
 import { Term } from "./term";
 import { SubstitutionAPI } from "./substitution/interface";
 import { StreamAPI } from "./stream/interface";
-import { Store, StoreAPI } from "./store/interface";
+import { StoreAPI } from "./store/interface";
 
 export { Term } from "./term";
 
@@ -10,22 +10,22 @@ export { Term } from "./term";
  * A Goal is a function that takes in [[IConstraints]] and returns a [[Stream]]
  * of [[IConstraints]] that represent success states
  */
-export type Goal<S, C extends Store<S>, $> = (store: C) => $;
+export type Goal<C, $> = (store: C) => $;
 
-export type KanrenConfig<S, C extends Store<S>, $> = {
+export type KanrenConfig<S, C, $> = {
     substitutionAPI: SubstitutionAPI<S>;
     storeAPI: StoreAPI<S, C>;
     streamAPI: StreamAPI<C, $>;
 };
 
-export type Kanren<S, C extends Store<S>, $> = {
-    unify(u: Term, v: Term): Goal<S, C, $>;
-    callWithFresh(f: (a: symbol) => Goal<S, C, $>): Goal<S, C, $>;
-    disj(g1: Goal<S, C, $>, g2: Goal<S, C, $>): Goal<S, C, $>;
-    conj(g1: Goal<S, C, $>, g2: Goal<S, C, $>): Goal<S, C, $>;
-    call(g: Goal<S, C, $>, state: C): $;
-    run(goal: Goal<S, C, $>, config: { numberOfSolutions: number }): Promise<C[]>;
-    runAll(goal: Goal<S, C, $>): Promise<C[]>;
+export type Kanren<S, C, $> = {
+    unify(u: Term, v: Term): Goal<C, $>;
+    callWithFresh(f: (a: symbol) => Goal<C, $>): Goal<C, $>;
+    disj(g1: Goal<C, $>, g2: Goal<C, $>): Goal<C, $>;
+    conj(g1: Goal<C, $>, g2: Goal<C, $>): Goal<C, $>;
+    call(g: Goal<C, $>, state: C): $;
+    run(goal: Goal<C, $>, config: { numberOfSolutions: number }): Promise<C[]>;
+    runAll(goal: Goal<C, $>): Promise<C[]>;
     api: {
         substitution: SubstitutionAPI<S>;
         store: StoreAPI<S, C>;
@@ -33,12 +33,12 @@ export type Kanren<S, C extends Store<S>, $> = {
     }
 };
 
-export const kanren = <S, C extends Store<S>, $>({
+export const kanren = <S, C, $>({
     substitutionAPI,
     storeAPI,
     streamAPI,
 }: KanrenConfig<S, C, $>): Kanren<S, C, $> => {
-    type G = Goal<S, C, $>;
+    type G = Goal<C, $>;
     const unification = buildUnification(substitutionAPI);
 
     /**
@@ -48,7 +48,7 @@ export const kanren = <S, C extends Store<S>, $>({
      */
     const unify = (u: Term, v: Term): G =>
         (store) => streamAPI.unit(
-            storeAPI.step(unification(u, v, store.substitution), store)
+            storeAPI.step(unification(u, v, storeAPI.getSubstitution(store)), store)
         );
 
     /**
@@ -56,7 +56,10 @@ export const kanren = <S, C extends Store<S>, $>({
      * to a function that, when given a `symbol`, returns a `Goal`.
      */
     const callWithFresh = (f: (a: symbol) => G): G =>
-        (store) => f(Symbol.for(`${store.count}`))(storeAPI.bump(store));
+        (store) => {
+            const [lvar, newStore] = storeAPI.fresh(store);
+            return f(lvar)(newStore)
+        };
 
     /**
      * Logical "or". This goal, when given two [[Goals]], aggregates states that are

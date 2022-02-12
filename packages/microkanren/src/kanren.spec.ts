@@ -4,7 +4,6 @@ import {SubstitutionList, SubstitutionListAPI} from "./substitution/substitution
 import SubstitutionMapAPI, { SubstitutionMap } from "./substitution/substitution.map";
 import { StreamReadableAPI } from "./stream/search.stream";
 import { ConstraintStore } from "./store/store";
-import { Store } from "./store/interface";
 import { StreamListAPI } from "./stream/search";
 
 
@@ -13,7 +12,7 @@ prelude({
     kanren: kanren({
         substitutionAPI: SubstitutionListAPI,
         storeAPI: ConstraintStore<SubstitutionList>(),
-        streamAPI: StreamReadableAPI<Store<SubstitutionList>>(),
+        streamAPI: StreamReadableAPI<ConstraintStore<SubstitutionList>>(),
     })
 });
 
@@ -22,7 +21,7 @@ prelude({
     kanren: kanren({
         substitutionAPI: SubstitutionMapAPI,
         storeAPI: ConstraintStore<SubstitutionMap>(),
-        streamAPI: StreamReadableAPI<Store<SubstitutionMap>>(),
+        streamAPI: StreamReadableAPI<ConstraintStore<SubstitutionMap>>(),
     })
 });
 
@@ -31,6 +30,6 @@ prelude({
     kanren: kanren({
         substitutionAPI: SubstitutionListAPI,
         storeAPI: ConstraintStore<SubstitutionList>(),
-        streamAPI: StreamListAPI<Store<SubstitutionList>>(),
+        streamAPI: StreamListAPI<ConstraintStore<SubstitutionList>>(),
     })
 });

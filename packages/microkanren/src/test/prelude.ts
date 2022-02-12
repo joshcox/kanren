@@ -1,15 +1,13 @@
 import { Goal, Kanren } from "../index";
-import { Store } from "../store/interface";
-import { Stream } from "../stream/search.stream";
 
-type PreludeConfig<S, C extends Store<S>, $> = {
+type PreludeConfig<S, C, $> = {
     kanren: Kanren<S, C, $>;
     name: string;
 }
 
-export const prelude = <S, C extends Store<S>, $>({ kanren, name }: PreludeConfig<S, C, $>) => {
+export const prelude = <S, C, $>({ kanren, name }: PreludeConfig<S, C, $>) => {
     const { unify, runAll, conj, disj, callWithFresh, api } = kanren;
-    const hasSolutions = (solutions: Store<S>[]): boolean => solutions.length > 0;
+    const hasSolutions = (solutions: C[]): boolean => solutions.length > 0;
 
     describe(name, () => {
         const succeed = (state: C): $ => api.stream.unit(state);
@@ -24,9 +22,12 @@ export const prelude = <S, C extends Store<S>, $>({ kanren, name }: PreludeConfi
                     const solution1 = f[0];
                     expect(solution1).toBeDefined();
                     if (solution1) {
-                        expect(solution1.count).toBe(1);
+                        expect(api.store.getCount(solution1)).toBe(1);
                         expect(
-                            api.substitution.walk(Symbol.for(`${solution1.count - 1}`), solution1.substitution)
+                            api.substitution.walk(
+                                Symbol.for(`${api.store.getCount(solution1) - 1}`),
+                                api.store.getSubstitution(solution1)
+                            )
                         ).toBe(5);
                     }
                 });
@@ -66,7 +67,7 @@ export const prelude = <S, C extends Store<S>, $>({ kanren, name }: PreludeConfi
 
         describe("constraint goals", () => {
             describe("unify", () => {
-                const canUnify = async (goal: Goal<S, C, $>): Promise<boolean> => hasSolutions(await runAll(goal));
+                const canUnify = async (goal: Goal<C, $>): Promise<boolean> => hasSolutions(await runAll(goal));
 
                 describe("symbols (logic variables)", () => {
                     it("can be unified with a symbol", async () => {
