@@ -1,14 +1,18 @@
-import { car, length } from "@kanren/data";
-import { kanren, Goal, IState } from "./index";
+import { car, cdr, length } from "@kanren/data";
+import { Goal, kanren, State } from "./index";
 import { Stream, unit } from "./search.stream";
+import SubstitutionListAPI, { SubstitutionList } from "./substitution/substituion.list";
 
-const { unify, runAll, conj, disj, callWithFresh } = kanren();
+const { unify, runAll, conj, disj, callWithFresh } = kanren({
+    substitutionAPI: SubstitutionListAPI
+});
 
-const hasSolutions = (solutions: IState[]): boolean => solutions.length > 0;
+
+const hasSolutions = (solutions: State<SubstitutionList>[]): boolean => solutions.length > 0;
 
 describe("mk", () => {
-    const succeed = (state: IState): Stream<IState> => unit.stream([state]);
-    const fail = (_: IState): Stream<IState> => unit.stream([]);
+    const succeed = (state: State<SubstitutionList>): Stream<State<SubstitutionList>> => unit.stream([state]);
+    const fail = (_: State<SubstitutionList>): Stream<State<SubstitutionList>> => unit.stream([]);
 
     describe("scope goals", () => {
         describe("callWithFresh", () => {
@@ -23,7 +27,8 @@ describe("mk", () => {
                     expect(length(solution1.substitution)).toBe(1);
 
                     const state1 = car(solution1.substitution);
-                    expect(state1).toEqual({ left: Symbol.for(`${solution1.count - 1}`), right: 5 });
+                    expect(car(state1)).toEqual(Symbol.for(`${solution1.count - 1}`));
+                    expect(cdr(state1)).toEqual(5);
                 }
             });
 
@@ -62,7 +67,7 @@ describe("mk", () => {
 
     describe("constraint goals", () => {
         describe("unify", () => {
-            const canUnifty = async (goal: Goal): Promise<boolean> => hasSolutions(await runAll(goal));
+            const canUnifty = async (goal: Goal<State<SubstitutionList>, SubstitutionList>): Promise<boolean> => hasSolutions(await runAll(goal));
 
             describe("symbols (logic variables)", () => {
                 it("can be unified with a symbol", async () => {
