@@ -22,8 +22,8 @@ export type Kanren<S> = {
     disj(g1: Goal<State<S>, S>, g2: Goal<State<S>, S>): Goal<State<S>, S>;
     conj(g1: Goal<State<S>, S>, g2: Goal<State<S>, S>): Goal<State<S>, S>;
     call(g: Goal<State<S>, S>, state: State<S>): search.Stream<State<S>>;
-    run(goal: Goal<State<S>, S>, { numberOfSolutions, ...options }: RunConfig<State<S>>): Promise<State<S>[]>;
-    runAll(goal: Goal<State<S>, S>, { state }?: RunnerConfig<State<S>>): Promise<State<S>[]>
+    run(goal: Goal<State<S>, S>, config: RunConfig<State<S>>): Promise<State<S>[]>;
+    runAll(goal: Goal<State<S>, S>, config: RunnerConfig<State<S>>): Promise<State<S>[]>
 };
 
 export const kanren = <S>({ substitutionAPI }: KanrenConfig<S>): Kanren<S> => {
