@@ -1,5 +1,6 @@
-import { isCons } from "@kanren/data";
+import { isCons, stream } from "@kanren/data";
 import { Readable } from "stream";
+import { StreamAPI } from "./interface";
 
 class Empty<A> extends Readable {
     constructor() {
@@ -109,3 +110,10 @@ export const takeUntil = async <A>($: Stream<A>, predicate: (results: A[]) => bo
 
     return results;
 };
+
+export const StreamReadableAPI = <A>(): StreamAPI<A, Stream<A>> => ({
+    bind,
+    plus,
+    takeUntil,
+    unit: <A>(item?: A) => item ? unit.stream([item]) : new Empty()
+});

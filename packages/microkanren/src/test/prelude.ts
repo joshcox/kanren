@@ -1,18 +1,19 @@
-import { Goal, Kanren, State } from "../index";
-import { Stream, unit } from "../search.stream";
+import { Goal, Kanren } from "../index";
+import { Store } from "../store/interface";
+import { Stream } from "../stream/search.stream";
 
-type PreludeConfig<S> = {
-    kanren: Kanren<S>;
+type PreludeConfig<S, C extends Store<S>, $ extends Stream<C>> = {
+    kanren: Kanren<S, C, $>;
     name: string;
 }
 
-export const prelude = <S>({ kanren, name }: PreludeConfig<S>) => {
+export const prelude = <S, C extends Store<S>, $ extends Stream<C>>({ kanren, name }: PreludeConfig<S, C, $>) => {
     const { unify, runAll, conj, disj, callWithFresh, api } = kanren;
-    const hasSolutions = (solutions: State<S>[]): boolean => solutions.length > 0;
+    const hasSolutions = (solutions: Store<S>[]): boolean => solutions.length > 0;
 
     describe(name, () => {
-        const succeed = (state: State<S>): Stream<State<S>> => unit.stream([state]);
-        const fail = (_: State<S>): Stream<State<S>> => unit.stream([]);
+        const succeed = (state: C): $ => api.stream.unit(state);
+        const fail = (_: C): $ => api.stream.unit();
 
         describe("scope goals", () => {
             describe("callWithFresh", () => {
@@ -65,7 +66,7 @@ export const prelude = <S>({ kanren, name }: PreludeConfig<S>) => {
 
         describe("constraint goals", () => {
             describe("unify", () => {
-                const canUnify = async (goal: Goal<S>): Promise<boolean> => hasSolutions(await runAll(goal));
+                const canUnify = async (goal: Goal<S, C, $>): Promise<boolean> => hasSolutions(await runAll(goal));
 
                 describe("symbols (logic variables)", () => {
                     it("can be unified with a symbol", async () => {
