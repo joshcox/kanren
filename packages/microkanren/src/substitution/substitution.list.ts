@@ -1,6 +1,5 @@
 import { car, cdr, Cons, cons, empty, find, List, Pair } from "@kanren/data";
-import { Term } from "..";
-import { SubstitutionAPI } from "./interface";
+import { SubstitutionAPI, Term } from "@kanren/types";
 
 export type SubstitutionList = List<Pair<symbol, Term>>;
 

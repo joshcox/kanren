@@ -1,6 +1,6 @@
 import { isCons, stream } from "@kanren/data";
+import { StreamAPI } from "@kanren/types";
 import { Readable } from "stream";
-import { StreamAPI } from "./interface";
 
 class Empty<A> extends Readable {
     constructor() {
@@ -111,9 +111,12 @@ export const takeUntil = async <A>($: Stream<A>, predicate: (results: A[]) => bo
     return results;
 };
 
+export const delay = <A>(fn: (item: A) => Stream<A>) => (item: A) => new Cons([], lazy(() => fn(item)));
+
 export const StreamReadableAPI = <A>(): StreamAPI<A, Stream<A>> => ({
     bind,
     plus,
     takeUntil,
-    unit: <A>(item?: A) => item ? unit.stream([item]) : new Empty()
+    unit: <A>(item?: A) => item ? unit.stream([item]) : new Empty(),
+    delay
 });

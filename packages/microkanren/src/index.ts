@@ -1,37 +1,5 @@
 import { buildUnification } from "./unification";
-import { Term } from "./term";
-import { SubstitutionAPI } from "./substitution/interface";
-import { StreamAPI } from "./stream/interface";
-import { StoreAPI } from "./store/interface";
-
-export { Term } from "./term";
-
-/**
- * A Goal is a function that takes in [[IConstraints]] and returns a [[Stream]]
- * of [[IConstraints]] that represent success states
- */
-export type Goal<C, $> = (store: C) => $;
-
-export type KanrenConfig<S, C, $> = {
-    substitutionAPI: SubstitutionAPI<S>;
-    storeAPI: StoreAPI<S, C>;
-    streamAPI: StreamAPI<C, $>;
-};
-
-export type Kanren<S, C, $> = {
-    unify(u: Term, v: Term): Goal<C, $>;
-    callWithFresh(f: (a: symbol) => Goal<C, $>): Goal<C, $>;
-    disj(g1: Goal<C, $>, g2: Goal<C, $>): Goal<C, $>;
-    conj(g1: Goal<C, $>, g2: Goal<C, $>): Goal<C, $>;
-    call(g: Goal<C, $>, state: C): $;
-    run(goal: Goal<C, $>, config: { numberOfSolutions: number }): Promise<C[]>;
-    runAll(goal: Goal<C, $>): Promise<C[]>;
-    api: {
-        substitution: SubstitutionAPI<S>;
-        store: StoreAPI<S, C>;
-        stream: StreamAPI<C, $>;
-    }
-};
+import { Goal, Kanren, KanrenConfig, Term } from "@kanren/types";
 
 export const kanren = <S, C, $>({
     substitutionAPI,
@@ -66,7 +34,7 @@ export const kanren = <S, C, $>({
      * successful in one, the other, or both [[Goal]]s.
      */
     const disj = (g1: G, g2: G): G =>
-        (state) => streamAPI.plus(g1(state), g2(state));
+        (state) => streamAPI.plus(delay(g1)(state), delay(g2)(state));
 
     /**
      * Logical "and". This goal, when given two [[Goals]], aggregates states that are
@@ -74,6 +42,9 @@ export const kanren = <S, C, $>({
      */
     const conj = (g1: G, g2: G): G =>
         (state) => streamAPI.bind(g2, g1(state));
+
+    // const delay = (g1: G): G => (store) => streamAPI.delay(() => g1(store));
+    const delay = streamAPI.delay;
 
     /**
      * Call a [[Goal]] against an [[State<Subst>]]. Any properties within the [[State<Subst>]] that are omitted
@@ -104,6 +75,7 @@ export const kanren = <S, C, $>({
         callWithFresh,
         run,
         runAll,
+        delay,
         api: {
             substitution: substitutionAPI,
             stream: streamAPI,

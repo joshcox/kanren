@@ -1,5 +1,4 @@
-import { Term } from "..";
-import { SubstitutionAPI } from "./interface";
+import { SubstitutionAPI, Term } from "@kanren/types";
 
 export type SubstitutionMap = Map<symbol, Term>;
 

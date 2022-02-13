@@ -1,5 +1,5 @@
-import { cons, force, isAbort, isCons, isEmpty, Empty, isFuture, isLazy, isStream, mapFuture, stream, Strem, take } from "@kanren/data";
-import { StreamAPI } from "./interface";
+import { cons, force, isAbort, isCons, isEmpty, Empty, isFuture, isLazy, isStream, mapFuture, stream, Strem, take, lazy } from "@kanren/data";
+import { StreamAPI } from "@kanren/types";
 
 export { take as takeUntil } from '@kanren/data';
 
@@ -35,9 +35,12 @@ export const bind = <A>(g: (item: A) => Strem<A>, $: Strem<A>): Strem<A> => {
     else throw new TypeError('Stream.promise#appendMap: unsupported stream type');
 };
 
+export const delay = <A>(fn: (item: A) => Strem<A>) => (item: A) => lazy(() => fn(item));
+
 export const StreamListAPI = <A>(): StreamAPI<A, Strem<A>> => ({
     bind,
     plus,
     takeUntil: take,
-    unit: <A>(item?: A) => item ? unit.stream([item]) : new Empty()
+    unit: <A>(item?: A) => item ? unit.stream([item]) : new Empty(),
+    delay
 });

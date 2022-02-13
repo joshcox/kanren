@@ -1,4 +1,4 @@
-import { Goal, Kanren } from "../index";
+import { Kanren, Goal } from "@kanren/types";
 
 type PreludeConfig<S, C, $> = {
     kanren: Kanren<S, C, $>;

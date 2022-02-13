@@ -1,4 +1,4 @@
-import { StoreAPI } from "./interface";
+import { StoreAPI } from "@kanren/types";
 
 export type ConstraintStore<S> = {
     substitution: S;

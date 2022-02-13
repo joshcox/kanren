@@ -23,6 +23,9 @@
       ],
       "@kanren/microkanren": [
         "packages/microkanren/src/index.ts"
+      ],
+      "@kanren/types": [
+        "packages/types/src/index.ts"
       ]
     }
   },

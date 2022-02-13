@@ -1,5 +1,4 @@
-import { SubstitutionAPI } from "./substitution/interface";
-import { Term } from "./term";
+import { SubstitutionAPI, Term } from "@kanren/types";
 
 export const buildUnification = <S>({ walk, add }: SubstitutionAPI<S>) => {
     const unification = (t1: Term, t2: Term, substitution: S | false): S | false => {
