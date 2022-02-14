@@ -6,7 +6,7 @@ type PreludeConfig<S, C, $> = {
 }
 
 export const prelude = <S, C, $>({ kanren, name }: PreludeConfig<S, C, $>) => {
-    const { unify, runAll, conj, disj, callWithFresh, api } = kanren;
+    const { unify, runWithFresh, runAll, conj, disj, callWithFresh, delay, api } = kanren;
     const hasSolutions = (solutions: C[]): boolean => solutions.length > 0;
 
     describe(name, () => {
@@ -189,6 +189,35 @@ export const prelude = <S, C, $>({ kanren, name }: PreludeConfig<S, C, $>) => {
                         expect(await canUnify(conj(unify(lvar, "a"), unify(lvar, "b")))).toBeFalsy();
                     });
                 });
+            });
+        });
+
+        describe("laziness", () => {
+            const fives = (x: symbol): Goal<C, $> => disj(
+                unify(x, 5),
+                delay(() => fives(x))
+            );
+            const fours = (x: symbol): Goal<C, $> => delay(() => disj(
+                unify(x, 4),
+                fours(x)
+            ));
+            const fives2 = (x: symbol): Goal<C, $> => conj(
+                unify(x, 5),
+                delay(() => fives(x))
+            );
+
+            it('can lazily pull a stream', async () => {
+                const fiveSolutions = await runWithFresh(fours, { numberOfSolutions: 5 });
+                expect(fiveSolutions).toHaveLength(5);
+                console.log(fiveSolutions);
+                console.log(fiveSolutions.length);
+            });
+
+            it('can lazily pull a stream', async () => {
+                const fiveSolutions = await runWithFresh(fives2, { numberOfSolutions: 5 });
+                expect(fiveSolutions).toHaveLength(5);
+                console.log(fiveSolutions);
+                console.log(fiveSolutions.length);
             });
         });
     });

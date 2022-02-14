@@ -5,9 +5,14 @@
   "scripts": {},
   "private": true,
   "dependencies": {
+    "inversify": "^6.0.1",
+    "lazystream": "^1.0.1",
+    "multistream": "^4.1.0",
+    "reflect-metadata": "^0.1.13",
     "tslib": "^2.0.0"
   },
   "devDependencies": {
+    "@collectable/map": "^4.0.1",
     "@nrwl/cli": "13.7.1",
     "@nrwl/eslint-plugin-nx": "13.7.1",
     "@nrwl/jest": "13.7.1",
@@ -16,9 +21,11 @@
     "@nrwl/tao": "13.7.1",
     "@nrwl/workspace": "13.7.1",
     "@types/jest": "27.0.2",
+    "@types/multistream": "^2.1.2",
     "@types/node": "16.11.7",
     "@typescript-eslint/eslint-plugin": "~5.10.0",
     "@typescript-eslint/parser": "~5.10.0",
+    "collectable": "^0.31.1",
     "eslint": "~8.7.0",
     "eslint-config-prettier": "8.1.0",
     "jest": "27.2.3",

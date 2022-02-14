@@ -1,5 +1,5 @@
-import { isCons, stream } from "@kanren/data";
 import { StreamAPI } from "@kanren/types";
+import { injectable } from "inversify";
 import { Readable } from "stream";
 
 class Empty<A> extends Readable {
@@ -113,10 +113,11 @@ export const takeUntil = async <A>($: Stream<A>, predicate: (results: A[]) => bo
 
 export const delay = <A>(fn: (item: A) => Stream<A>) => (item: A) => new Cons([], lazy(() => fn(item)));
 
-export const StreamReadableAPI = <A>(): StreamAPI<A, Stream<A>> => ({
-    bind,
-    plus,
-    takeUntil,
-    unit: <A>(item?: A) => item ? unit.stream([item]) : new Empty(),
-    delay
-});
+@injectable()
+export class StreamReadableAPI<A> implements StreamAPI<A, Stream<A>> {
+    bind = bind;
+    plus = plus;
+    takeUntil = takeUntil;
+    unit = (item?: A) => item ? unit.stream([item]) : new Empty();
+    delay = delay;
+}

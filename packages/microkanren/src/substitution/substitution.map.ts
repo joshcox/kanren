@@ -1,26 +1,15 @@
+import { HashMap, empty, set, get, has, HashMapStructure } from '@collectable/map';
 import { SubstitutionAPI, Term } from "@kanren/types";
+import { injectable } from 'inversify';
 
-export type SubstitutionMap = Map<symbol, Term>;
+export type SubstitutionHashMap = HashMapStructure<Term, Term>;
 
-/**
- * Follows an associative path to find what the input (`term`) is
- * equivalent to. When no substitution association is made, the result
- * is the input (`term`).
- */
-const walk = (term: Term, substitution: SubstitutionMap): Term => {
-    const next = typeof term === "symbol" && substitution.has(term);
-    return next ? walk(substitution.get(term), substitution) : term;
-};
-
-const add = (left: symbol, right: Term, substitution: SubstitutionMap): SubstitutionMap => {
-    const map = new Map(substitution).set(left, right);
-    return map;
-};
-    
-export const SubstitutionMapAPI: SubstitutionAPI<SubstitutionMap> = {
-    walk,
-    add,
-    empty: () => new Map<symbol, Term>()
-};
-
-export default SubstitutionMapAPI;
+@injectable()
+export class SubstitutionHashMapAPI implements SubstitutionAPI<SubstitutionHashMap> {
+    add = set;
+    empty = empty;
+    walk = (term: Term, substitution: HashMap.Instance<Term, Term>): Term => {
+        const next = typeof term === "symbol" && has(term, substitution);
+        return next ? this.walk(get(term, substitution), substitution) : term;
+    };
+}
