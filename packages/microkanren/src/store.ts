@@ -1,6 +1,6 @@
 import { StoreAPI, SubstitutionAPI } from "@kanren/types";
 import { inject, injectable } from "inversify";
-import { Library } from "../constants";
+import { Library } from "./constants";
 
 export type ConstraintStore<S> = {
     substitution: S;

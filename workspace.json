@@ -1,7 +1,6 @@
 {
   "version": 2,
   "projects": {
-    "data": "packages/data",
     "microkanren": "packages/microkanren",
     "types": "packages/types"
   }

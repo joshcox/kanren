@@ -1,16 +1,16 @@
 import { Kanren } from "@kanren/types";
 import { Container } from "inversify";
+import { Readable } from "stream";
 import { MKanren } from ".";
 import { Library } from "./constants";
-import { CStore } from "./store/store";
-import { StreamableAPI } from "./stream/search.list";
-import { Stream, StreamReadableAPI } from "./stream/search.stream";
-import { SubstitutionHashMap, SubstitutionHashMapAPI } from "./substitution/substitution.map";
+import { CStore } from "./store";
+import { StreamableAPI } from "./search.stream";
+import { SubstitutionHashMap, SubstitutionHashMapAPI } from "./substitution.map";
 
 export const buildKanren = () => {
     type S = SubstitutionHashMap;
     type C = CStore<SubstitutionHashMap>;
-    type $ = Stream<SubstitutionHashMap>;
+    type $ = Readable;
 
     let container = new Container({ defaultScope: 'Singleton' });
     container.bind(Library.Store).to(CStore);

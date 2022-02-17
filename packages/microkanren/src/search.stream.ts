@@ -2,6 +2,11 @@ import { StreamAPI } from "@kanren/types";
 import { injectable } from "inversify";
 import { Readable } from "stream";
 
+
+const unit = <A>(item?: A): Readable => Readable.from(item ? [item] : [], {
+    objectMode: true
+});
+
 class Lazy extends Readable {
     private $: Readable | null = null;
 
@@ -72,7 +77,3 @@ export class StreamableAPI<A> implements StreamAPI<A, Readable> {
     unit = unit;
     delay = delay;
 }
-
-const unit = <A>(item?: A): Readable => Readable.from(item ? [item] : [], {
-    objectMode: true
-});

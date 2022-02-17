@@ -18,9 +18,6 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@kanren/data": [
-        "packages/data/src/index.ts"
-      ],
       "@kanren/microkanren": [
         "packages/microkanren/src/index.ts"
       ],
