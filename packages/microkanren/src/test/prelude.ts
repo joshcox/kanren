@@ -193,28 +193,32 @@ export const prelude = <S, C, $>({ kanren, name }: PreludeConfig<S, C, $>) => {
         });
 
         describe("laziness", () => {
-            const fives = (x: symbol): Goal<C, $> => disj(
-                unify(x, 5),
-                delay(() => fives(x))
-            );
-            const fours = (x: symbol): Goal<C, $> => delay(() => disj(
-                unify(x, 4),
-                fours(x)
-            ));
-            const fives2 = (x: symbol): Goal<C, $> => conj(
-                unify(x, 5),
-                delay(() => fives(x))
-            );
+            it('can find a four', async () => {
+                const threes = (x: symbol): Goal<C, $> => delay(() => disj(
+                    disj(unify(x, 3), delay(() => threes(x))),
+                    unify(x, 4)
+                ));
 
-            it('can lazily pull a stream', async () => {
-                const fiveSolutions = await runWithFresh(fours, { numberOfSolutions: 5 });
+                const fiveSolutions = await runWithFresh(threes, { numberOfSolutions: 5 });
+                expect(
+                    fiveSolutions.some((s) => {
+                        const value = api.substitution.walk(Symbol.for('0'), api.store.getSubstitution(s));
+                        console.log(value);
+                        return value === 4
+                    })
+                ).toBeTruthy();
                 expect(fiveSolutions).toHaveLength(5);
                 console.log(fiveSolutions);
                 console.log(fiveSolutions.length);
             });
 
-            it('can lazily pull a stream', async () => {
-                const fiveSolutions = await runWithFresh(fives2, { numberOfSolutions: 5 });
+            it('can lazily pull an infinite disj stream', async () => {
+                const fours = (x: symbol): Goal<C, $> => delay(() => disj(
+                    unify(x, 4),
+                    fours(x)
+                ));
+
+                const fiveSolutions = await runWithFresh(fours, { numberOfSolutions: 5 });
                 expect(fiveSolutions).toHaveLength(5);
                 console.log(fiveSolutions);
                 console.log(fiveSolutions.length);

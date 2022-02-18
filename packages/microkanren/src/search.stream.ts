@@ -14,14 +14,17 @@ class Lazy extends Readable {
         return this.$ !== null;
     }
 
+    force = () => this.$ = this.delayedStream();
+
     constructor(private delayedStream: () => Readable) {
         super({
             objectMode: true,
             read(this: Lazy) {
-                if (!this.forced) this.$ = this.delayedStream();
+                if (!this.forced) this.force();
                 let next;
-                while (null !== (next = this.$!.read()))
+                while (null !== (next = this.$!.read())) {
                     if (!this.push(next)) this.$!.unshift(next);
+                }
             }
         });
     }
@@ -32,23 +35,29 @@ export const lazy = (force: () => Readable): Lazy => new Lazy(force);
 
 
 const plus = ($1: Readable, $2: Readable): Readable =>
-    isLazy($1) ? plus($2, $1) : new Readable({
+     new Readable({
         objectMode: true,
         read() {
+            if (this.destroyed) return;
             let next;
-            while (null !== (next = $1.read())) {
-                if (!this.push(next)) $1.unshift(next);
-            }
-            if (next === null && !isLazy($2)) while (null !== (next = $2.read())) {
-                if (!this.push(next)) $2.unshift(next);
-            } else {
-                this.push($2);
-                this.destroy();
+            while (null !== (next = $1.read()))
+                if (isUnforced(next)) {
+                    const nextBound = next;
+                    if (!this.push(lazy(() => plus($2, nextBound.force())))) $1.unshift(next);
+                    else this.destroy()
+                }
+                else if (!this.push(next)) $1.unshift(next);
+            if (next === null) {
+                if (isUnforced($2)) if (this.push($2)) this.destroy();
+                else while (null !== (next = $2.read())) {
+                    if (!this.push(next)) $2.unshift(next);
+                }
             }
         }
     });
 
 const bind = <A>(fn: (item: A) => Readable, $: Readable): Readable => {
+    if (isUnforced($)) return lazy(() => bind(fn, $.force()))
     const first = $.read();
     if (first === null) return unit();
     else return plus(fn(first), bind(fn, $));
@@ -59,7 +68,7 @@ export const takeUntil = async <A>($: Readable, predicate: (results: A[]) => boo
 
     while (!predicate(results)) {
         const result = $.read();
-        if (isLazy(result)) $ = result;
+        if (isLazy(result)) $ = result.force();
         else if (result === null) break;
         else results.push(result);
     }

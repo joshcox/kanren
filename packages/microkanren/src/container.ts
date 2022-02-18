@@ -14,7 +14,6 @@ export const buildKanren = () => {
 
     let container = new Container({ defaultScope: 'Singleton' });
     container.bind(Library.Store).to(CStore);
-    // container.bind(Library.Stream).to(StreamReadableAPI);
     container.bind(Library.Stream).to(StreamableAPI);
     container.bind(Library.Substitution).to(SubstitutionHashMapAPI);
     container.bind(Library.Kanren).to(MKanren);
