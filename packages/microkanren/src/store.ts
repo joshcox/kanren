@@ -1,4 +1,4 @@
-import { StoreAPI, SubstitutionAPI } from "@kanren/types";
+import { LVar, StoreAPI, SubstitutionAPI, TermAPI } from "@kanren/types";
 import { inject, injectable } from "inversify";
 import { Library } from "./constants";
 
@@ -8,9 +8,10 @@ export type ConstraintStore<S> = {
 }
 
 @injectable()
-export class CStore<S> implements StoreAPI<S, ConstraintStore<S>> {
+export class CStore<T, S> implements StoreAPI<S, ConstraintStore<S>> {
     constructor(
-        @inject(Library.Substitution) private substitution: SubstitutionAPI<S>
+        @inject(Library.Substitution) private substitution: SubstitutionAPI<T, S>,
+        @inject(Library.Term) private term: TermAPI<T>
     ) { }
 
     empty = (): ConstraintStore<S> => ({
@@ -26,8 +27,8 @@ export class CStore<S> implements StoreAPI<S, ConstraintStore<S>> {
     step = (substitution: false | S, prevStore: ConstraintStore<S>): ConstraintStore<S> | undefined =>
         substitution ? { ...prevStore, substitution } : undefined;
 
-    fresh = (store: ConstraintStore<S>): [symbol, ConstraintStore<S>] =>
-        ([Symbol.for(`${store.count}`), this.increment(store)]);
+    fresh = (store: ConstraintStore<S>): [LVar, ConstraintStore<S>] =>
+        ([this.term.lvar(store.count), this.increment(store)]);
 
     getSubstitution = (store: ConstraintStore<S>): S => store.substitution;
 

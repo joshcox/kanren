@@ -1,13 +1,17 @@
 import { Kanren, Goal } from "@kanren/types";
 
-type PreludeConfig<S, C, $> = {
-    kanren: Kanren<S, C, $>;
+type PreludeConfig<T, S, C, $> = {
+    kanren: Kanren<T, S, C, $>;
     name: string;
 }
 
-export const prelude = <S, C, $>({ kanren, name }: PreludeConfig<S, C, $>) => {
+export const prelude = <T, S, C, $>({ kanren, name }: PreludeConfig<T, S, C, $>) => {
     const { unify, runWithFresh, runAll, conj, disj, callWithFresh, delay, api } = kanren;
     const hasSolutions = (solutions: C[]): boolean => solutions.length > 0;
+
+    const {
+        term: { lvar: buildLVar }
+    } = api;
 
     describe(name, () => {
         const succeed = (state: C): $ => api.stream.unit(state);
@@ -25,7 +29,7 @@ export const prelude = <S, C, $>({ kanren, name }: PreludeConfig<S, C, $>) => {
                         expect(api.store.getCount(solution1)).toBe(1);
                         expect(
                             api.substitution.walk(
-                                Symbol.for(`${api.store.getCount(solution1) - 1}`),
+                                api.term.lvar(api.store.getCount(solution1) - 1),
                                 api.store.getSubstitution(solution1)
                             )
                         ).toBe(5);

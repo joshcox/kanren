@@ -1,7 +1,7 @@
-import { SubstitutionAPI, Term } from "@kanren/types";
+import { Term, SubstitutionAPI } from "@kanren/types";
 
-export const buildUnification = <S>({ walk, add }: SubstitutionAPI<S>) => {
-    const unification = (t1: Term, t2: Term, substitution: S | false): S | false => {
+export const buildUnification = <T, S>({ walk, add }: SubstitutionAPI<T, S>) => {
+    const unification = (t1: Term<T>, t2: Term<T>, substitution: S | false): S | false => {
         // you cannot unify terms in a broken substitution
         if (substitution === false) return false;
 
@@ -17,8 +17,8 @@ export const buildUnification = <S>({ walk, add }: SubstitutionAPI<S>) => {
         else if (Array.isArray(t1) && Array.isArray(t2) && t1.length === 0 && t2.length === 0) return substitution;
         // arrays unify every element in both arrays unify with a matching element in the other array
         else if (Array.isArray(t1) && Array.isArray(t2) && t1.length === t2.length) return unification(
-            t1.slice(1, t1.length - 1),
-            t2.slice(1, t2.length - 1),
+            t1.slice(1, t1.length - 1) as unknown as T,
+            t2.slice(1, t2.length - 1) as unknown as T,
             unification(t1[0], t2[0], substitution));
         else return false;
     };
